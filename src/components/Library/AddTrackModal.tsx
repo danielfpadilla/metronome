@@ -6,8 +6,8 @@ import { AuthModal } from '@/components/Auth/AuthModal';
 interface AddTrackModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddYouTube: (url: string, title: string) => Promise<void>;
-  onAddManual: (title: string, bpm: number) => Promise<void>;
+  onAddYouTube: (url: string, title: string) => Promise<unknown>;
+  onAddManual: (title: string, bpm: number) => Promise<unknown>;
 }
 
 export function AddTrackModal({ isOpen, onClose, onAddYouTube, onAddManual }: AddTrackModalProps) {

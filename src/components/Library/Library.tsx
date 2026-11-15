@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import { useTracks } from '@/hooks/useTracks';
-import { useAuthContext } from '@/components/Auth/AuthProvider';
 import { TrackCard } from './TrackCard';
 import { AddTrackModal } from './AddTrackModal';
 
 export function Library() {
   const { tracks, loading, addYouTubeTrack, addManualTrack, deleteTrack } = useTracks();
-  const { user } = useAuthContext();
   const [showAddModal, setShowAddModal] = useState(false);
   const [search, setSearch] = useState('');
 
