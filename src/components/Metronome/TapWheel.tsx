@@ -9,6 +9,7 @@ interface TapWheelProps {
 export function TapWheel({ onTap, onRotate, size = 280 }: TapWheelProps) {
   const wheelRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
+  const hasMovedRef = useRef(false);
   const lastAngleRef = useRef<number | null>(null);
 
   const getAngle = useCallback((clientX: number, clientY: number) => {
@@ -21,6 +22,7 @@ export function TapWheel({ onTap, onRotate, size = 280 }: TapWheelProps) {
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     isDraggingRef.current = true;
+    hasMovedRef.current = false;
     lastAngleRef.current = getAngle(e.clientX, e.clientY);
 
     const handleMouseMove = (ev: MouseEvent) => {
@@ -30,14 +32,17 @@ export function TapWheel({ onTap, onRotate, size = 280 }: TapWheelProps) {
       let normalizedDelta = delta;
       if (normalizedDelta > 180) normalizedDelta -= 360;
       if (normalizedDelta < -180) normalizedDelta += 360;
-      if (Math.abs(normalizedDelta) > 2 && onRotate) {
-        onRotate(normalizedDelta > 0 ? 1 : -1);
+      if (Math.abs(normalizedDelta) > 2) {
+        hasMovedRef.current = true;
+        if (onRotate) {
+          onRotate(normalizedDelta > 0 ? 1 : -1);
+        }
         lastAngleRef.current = angle;
       }
     };
 
     const handleMouseUp = () => {
-      if (!isDraggingRef.current) {
+      if (!hasMovedRef.current) {
         onTap();
         if (wheelRef.current) {
           wheelRef.current.style.transform = 'scale(0.98)';
@@ -47,6 +52,7 @@ export function TapWheel({ onTap, onRotate, size = 280 }: TapWheelProps) {
         }
       }
       isDraggingRef.current = false;
+      hasMovedRef.current = false;
       lastAngleRef.current = null;
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);

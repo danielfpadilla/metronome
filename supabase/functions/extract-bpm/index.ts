@@ -11,13 +11,17 @@ serve(async (req: Request) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  let trackId: string | null = null;
+
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    const { youtube_url, track_id } = await req.json();
+    const body = await req.json();
+    const { youtube_url, track_id } = body;
+    trackId = track_id;
 
     if (!youtube_url || !track_id) {
       return new Response(
@@ -62,16 +66,26 @@ serve(async (req: Request) => {
 
     await supabase
       .from('tracks')
-      .update({ bpm, storage_path: storagePath })
+      .update({ bpm, storage_path: storagePath, status: 'ready' })
       .eq('id', track_id);
 
     try { await Deno.remove(tmpAudio); } catch { /* ignore */ }
 
     return new Response(
-      JSON.stringify({ bpm, storage_path: storagePath }),
+      JSON.stringify({ bpm, storage_path: storagePath, status: 'ready' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (error) {
+    if (trackId) {
+      try {
+        const supabase = createClient(
+          Deno.env.get('SUPABASE_URL')!,
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+        );
+        await supabase.from('tracks').update({ status: 'failed' }).eq('id', trackId);
+      } catch { /* ignore */ }
+    }
+
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
