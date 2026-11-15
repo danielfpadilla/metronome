@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/auth/authprovider.tsx","./src/components/layout/appshell.tsx","./src/components/library/library.tsx","./src/components/metronome/metronome.tsx","./src/components/playlists/playlists.tsx"],"version":"5.9.3"}
