@@ -27,7 +27,6 @@ export function tapTempoToBpm(tapTimes: number[]): number | null {
 }
 
 export function getBeatAccent(beat: number, timeSignature: string): 'accent' | 'normal' {
-  const beats = beatsPerMeasure(timeSignature);
   if (beat === 0) return 'accent';
   if (timeSignature === '6/8' && beat === 3) return 'accent';
   return 'normal';
