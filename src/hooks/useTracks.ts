@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { cacheTracks, getCachedTracks, isOnline } from '@/lib/sync';
 import type { Track } from '@/types';
 
 export function useTracks() {
@@ -8,11 +9,19 @@ export function useTracks() {
 
   const fetchTracks = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('tracks')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (!error && data) setTracks(data as Track[]);
+    if (isOnline()) {
+      const { data, error } = await supabase
+        .from('tracks')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error && data) {
+        setTracks(data as Track[]);
+        await cacheTracks(data as Track[]);
+      }
+    } else {
+      const cached = await getCachedTracks();
+      setTracks(cached as Track[]);
+    }
     setLoading(false);
   }, []);
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { cachePlaylists, getCachedPlaylists, isOnline } from '@/lib/sync';
 import type { Playlist } from '@/types';
 
 export function usePlaylists() {
@@ -8,19 +9,25 @@ export function usePlaylists() {
 
   const fetchPlaylists = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('playlists')
-      .select('*, playlist_tracks(*, tracks(*))')
-      .order('created_at', { ascending: false });
+    if (isOnline()) {
+      const { data, error } = await supabase
+        .from('playlists')
+        .select('*, playlist_tracks(*, tracks(*))')
+        .order('created_at', { ascending: false });
 
-    if (!error && data) {
-      const mapped = (data as any[]).map((p) => ({
-        ...p,
-        tracks: (p.playlist_tracks || [])
-          .sort((a: any, b: any) => a.position - b.position)
-          .map((pt: any) => ({ ...pt, track: pt.tracks })),
-      }));
-      setPlaylists(mapped);
+      if (!error && data) {
+        const mapped = (data as any[]).map((p) => ({
+          ...p,
+          tracks: (p.playlist_tracks || [])
+            .sort((a: any, b: any) => a.position - b.position)
+            .map((pt: any) => ({ ...pt, track: pt.tracks })),
+        }));
+        setPlaylists(mapped);
+        await cachePlaylists(mapped);
+      }
+    } else {
+      const cached = await getCachedPlaylists();
+      setPlaylists(cached as Playlist[]);
     }
     setLoading(false);
   }, []);
