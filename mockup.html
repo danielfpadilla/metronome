@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Metronome Mockup — Mobile Responsive</title>
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #e0e0e0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.app {
+  width: 100%;
+  max-width: 420px;
+  height: 100vh;
+  height: 100dvh;
+  background: #111;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Top controls section */
+.top-controls {
+  padding: clamp(8px, 2vw, 16px) clamp(12px, 3vw, 16px);
+  background: #111;
+  border-bottom: 1px solid #222;
+  flex-shrink: 0;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: clamp(6px, 1.5vw, 12px);
+}
+
+.top-icon {
+  width: clamp(32px, 8vw, 40px);
+  height: clamp(32px, 8vw, 40px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  font-size: clamp(16px, 4vw, 20px);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.2s, background 0.2s;
+  flex-shrink: 0;
+}
+
+.top-icon:hover, .top-icon:active {
+  color: #fff;
+  background: #1a1a1a;
+}
+
+.bpm-center {
+  text-align: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.bpm-value {
+  font-size: clamp(32px, 10vw, 48px);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.bpm-term {
+  font-size: clamp(9px, 2.5vw, 12px);
+  color: #666;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.top-right {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(4px, 1.5vw, 8px);
+  flex-wrap: wrap;
+}
+
+.ctrl-btn {
+  height: clamp(32px, 8vw, 40px);
+  min-width: clamp(32px, 8vw, 40px);
+  padding: 0 clamp(8px, 2vw, 12px);
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  font-size: clamp(12px, 3vw, 16px);
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.ctrl-btn:hover, .ctrl-btn:active {
+  color: #fff;
+  border-color: #444;
+}
+
+.ctrl-btn.active {
+  color: #fff;
+  background: #2a2a2a;
+  border-color: #555;
+}
+
+.play-btn {
+  height: clamp(32px, 8vw, 40px);
+  padding: 0 clamp(16px, 4vw, 24px);
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: clamp(12px, 3vw, 14px);
+  cursor: pointer;
+  transition: all 0.2s;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.play-btn:hover, .play-btn:active {
+  background: #333;
+  border-color: #555;
+}
+
+.play-btn.playing {
+  background: #1a1a1a;
+}
+
+/* Tap wheel */
+.tap-wheel-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(8px, 2vw, 16px);
+  min-height: 0;
+  position: relative;
+}
+
+.tap-wheel {
+  --wheel-size: min(70vw, 280px);
+  width: var(--wheel-size);
+  height: var(--wheel-size);
+  max-width: 280px;
+  max-height: 280px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s;
+  flex-shrink: 0;
+  margin: auto;
+}
+
+.tap-wheel:active {
+  transform: scale(0.98);
+}
+
+.tap-wheel-inner {
+  width: 60%;
+  height: 60%;
+  border-radius: 50%;
+  background: #151515;
+  border: 1px solid #252525;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tap-label {
+  font-size: clamp(11px, 3vw, 14px);
+  color: #444;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Tick marks - positioned using absolute centering */
+.tick {
+  position: absolute;
+  width: 2px;
+  height: 12px;
+  background: #333;
+  left: 50%;
+  top: 50%;
+  margin-left: -1px;
+  margin-top: -130px;
+  transform-origin: center 130px;
+}
+
+.tick:nth-child(1) { transform: rotate(0deg); }
+.tick:nth-child(2) { transform: rotate(30deg); }
+.tick:nth-child(3) { transform: rotate(60deg); }
+.tick:nth-child(4) { transform: rotate(90deg); }
+.tick:nth-child(5) { transform: rotate(120deg); }
+.tick:nth-child(6) { transform: rotate(150deg); }
+.tick:nth-child(7) { transform: rotate(180deg); }
+.tick:nth-child(8) { transform: rotate(210deg); }
+.tick:nth-child(9) { transform: rotate(240deg); }
+.tick:nth-child(10) { transform: rotate(270deg); }
+.tick:nth-child(11) { transform: rotate(300deg); }
+.tick:nth-child(12) { transform: rotate(330deg); }
+
+/* Bottom section */
+.bottom-section {
+  padding: clamp(8px, 2vw, 12px) clamp(12px, 3vw, 16px);
+  background: #111;
+  border-top: 1px solid #222;
+  flex-shrink: 0;
+}
+
+.subdiv-row {
+  display: flex;
+  gap: clamp(4px, 1.5vw, 8px);
+  justify-content: center;
+  margin-bottom: clamp(8px, 2vw, 12px);
+  flex-wrap: wrap;
+}
+
+.subdiv-btn {
+  width: clamp(36px, 9vw, 44px);
+  height: clamp(36px, 9vw, 44px);
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.subdiv-btn:hover, .subdiv-btn:active {
+  border-color: #444;
+}
+
+.subdiv-btn.active {
+  border-color: #666;
+  background: #222;
+}
+
+.subdiv-pattern {
+  width: 60%;
+  height: 60%;
+  background: linear-gradient(to right,
+    #333 0%, #333 20%, #1a1a1a 20%, #1a1a1a 40%,
+    #333 40%, #333 60%, #1a1a1a 60%, #1a1a1a 80%,
+    #333 80%, #333 100%
+  );
+  opacity: 0.6;
+}
+
+.subdiv-btn:nth-child(2) .subdiv-pattern {
+  background: linear-gradient(to right,
+    #333 0%, #333 40%, #1a1a1a 40%, #1a1a1a 60%,
+    #333 60%, #333 100%
+  );
+}
+
+.subdiv-btn:nth-child(3) .subdiv-pattern {
+  background: linear-gradient(to right,
+    #333 0%, #333 15%, #1a1a1a 15%, #1a1a1a 30%,
+    #333 30%, #333 45%, #1a1a1a 45%, #1a1a1a 60%,
+    #333 60%, #333 75%, #1a1a1a 75%, #1a1a1a 100%
+  );
+}
+
+.subdiv-btn:nth-child(4) .subdiv-pattern {
+  background: linear-gradient(to right,
+    #333 0%, #333 8%, #1a1a1a 8%, #1a1a1a 16%,
+    #333 16%, #333 24%, #1a1a1a 24%, #1a1a1a 32%,
+    #333 32%, #333 40%, #1a1a1a 40%, #1a1a1a 48%,
+    #333 48%, #333 56%, #1a1a1a 56%, #1a1a1a 64%,
+    #333 64%, #333 72%, #1a1a1a 72%, #1a1a1a 80%,
+    #333 80%, #333 88%, #1a1a1a 88%, #1a1a1a 100%
+  );
+}
+
+.bottom-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 3vw, 16px);
+  height: clamp(36px, 9vw, 44px);
+  flex-wrap: wrap;
+}
+
+.toolbar-btn {
+  background: none;
+  border: none;
+  color: #555;
+  font-size: clamp(14px, 3.5vw, 18px);
+  cursor: pointer;
+  padding: clamp(4px, 1vw, 8px);
+  border-radius: 4px;
+  transition: color 0.2s, background 0.2s;
+  min-width: 32px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toolbar-btn:hover, .toolbar-btn:active {
+  color: #fff;
+  background: #1a1a1a;
+}
+
+.time-display {
+  font-family: monospace;
+  font-size: clamp(11px, 3vw, 14px);
+  color: #555;
+  min-width: 40px;
+  text-align: center;
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .app {
+    flex-direction: row;
+  }
+  .top-controls {
+    width: 40%;
+    border-bottom: none;
+    border-right: 1px solid #222;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .tap-wheel-container {
+    width: 60%;
+  }
+  .bottom-section {
+    display: none;
+  }
+  .tap-wheel {
+    --wheel-size: min(40vh, 200px);
+    width: var(--wheel-size);
+    height: var(--wheel-size);
+  }
+  .tick {
+    margin-top: calc(var(--wheel-size) / -2 + 10px);
+    transform-origin: center calc(var(--wheel-size) / 2);
+  }
+}
+
+@media (max-width: 360px) {
+  .control-row {
+    gap: 4px;
+  }
+  .ctrl-btn {
+    min-width: 30px;
+    padding: 0 6px;
+    font-size: 11px;
+  }
+  .play-btn {
+    padding: 0 12px;
+    font-size: 11px;
+  }
+  .bpm-value {
+    font-size: 28px;
+  }
+}
+
+@media (min-width: 768px) {
+  .app {
+    max-width: 480px;
+    border-radius: 24px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tap-wheel, .ctrl-btn, .play-btn, .subdiv-btn, .toolbar-btn, .top-icon {
+    transition: none;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .ctrl-btn, .play-btn, .subdiv-btn, .toolbar-btn, .top-icon {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="top-controls">
+    <div class="top-bar">
+      <div class="top-icon">♪</div>
+      <div class="bpm-center">
+        <div class="bpm-value" id="bpmValue">100</div>
+      </div>
+      <div class="top-right">
+        <div class="top-icon">♪</div>
+        <div class="top-icon">⚙</div>
+      </div>
+    </div>
+    
+    <div class="control-row">
+      <button class="ctrl-btn" id="bpmMinus">−</button>
+      <button class="play-btn" id="playBtn">
+        <span id="playIcon">▶</span>
+        <span>Play</span>
+      </button>
+      <button class="ctrl-btn" id="bpmPlus">+</button>
+      <button class="ctrl-btn">4/4</button>
+    </div>
+  </div>
+
+  <div class="tap-wheel-container">
+    <div class="tap-wheel" id="tapWheel">
+      <div class="tick"></div>
+      <div class="tick"></div>
+      <div class="tick"></div>
+      <div class="tick"></div>
+      <div class="tick"></div>
+      <div class="tick"></div>
+      <div class="tick"></div>
+      <div class="tick"></div>
+      <div class="tick"></div>
+      <div class="tick"></div>
+      <div class="tick"></div>
+      <div class="tick"></div>
+      <div class="tap-wheel-inner">
+        <div class="tap-label">Tap</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-section">
+    <div class="subdiv-row">
+      <div class="subdiv-btn active"><div class="subdiv-pattern"></div></div>
+      <div class="subdiv-btn"><div class="subdiv-pattern"></div></div>
+      <div class="subdiv-btn"><div class="subdiv-pattern"></div></div>
+      <div class="subdiv-btn"><div class="subdiv-pattern"></div></div>
+    </div>
+    
+    <div class="bottom-toolbar">
+      <button class="toolbar-btn" title="Play">▶</button>
+      <button class="toolbar-btn" title="Stop">■</button>
+      <button class="toolbar-btn" title="Metronome">♪</button>
+      <div class="time-display">0:00</div>
+      <button class="toolbar-btn" title="Pencil">✎</button>
+      <button class="toolbar-btn" title="Eraser">⌫</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let bpm = 100;
+const bpmValueEl = document.getElementById('bpmValue');
+const tapWheel = document.getElementById('tapWheel');
+let tapTimes = [];
+
+function updateBPM(newBpm) {
+  bpm = Math.max(40, Math.min(240, newBpm));
+  bpmValueEl.textContent = bpm;
+}
+
+document.getElementById('bpmMinus').addEventListener('click', () => updateBPM(bpm - 1));
+document.getElementById('bpmPlus').addEventListener('click', () => updateBPM(bpm + 1));
+
+tapWheel.addEventListener('click', () => {
+  const now = Date.now();
+  tapTimes.push(now);
+  if (tapTimes.length > 6) tapTimes.shift();
+  
+  tapWheel.style.transform = 'scale(0.98)';
+  setTimeout(() => tapWheel.style.transform = '', 150);
+  
+  if (tapTimes.length >= 2) {
+    const intervals = tapTimes.slice(1).map((t, i) => t - tapTimes[i]);
+    const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+    const newBpm = Math.round(60000 / avgInterval);
+    updateBPM(newBpm);
+  }
+});
+
+const playBtn = document.getElementById('playBtn');
+const playIcon = document.getElementById('playIcon');
+let isPlaying = false;
+playBtn.addEventListener('click', () => {
+  isPlaying = !isPlaying;
+  playIcon.textContent = isPlaying ? '❚❚' : '▶';
+  playBtn.querySelector('span:last-child').textContent = isPlaying ? 'Pause' : 'Play';
+  playBtn.classList.toggle('playing', isPlaying);
+});
+
+document.querySelectorAll('.subdiv-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.subdiv-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>","path":"/Users/danielfpadilla/metronome/mockup.html})
+[Tool result]: Created file successfully: mockup.html
