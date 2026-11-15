@@ -1,15 +1,19 @@
 import { useState } from 'react';
 import { usePlaylists } from '@/hooks/usePlaylists';
+import { useTracks } from '@/hooks/useTracks';
 import { PlaylistCard } from './PlaylistCard';
+import { PlaylistEditor } from './PlaylistEditor';
 import { useAuthContext } from '@/components/Auth/AuthProvider';
 import { AuthModal } from '@/components/Auth/AuthModal';
 
 export function Playlists() {
-  const { playlists, loading, createPlaylist, deletePlaylist } = usePlaylists();
+  const { playlists, loading, createPlaylist, deletePlaylist, addTrackToPlaylist, removeTrackFromPlaylist, reorderTracks } = usePlaylists();
+  const { tracks } = useTracks();
   const { user } = useAuthContext();
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
   const [showAuth, setShowAuth] = useState(false);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null);
 
   const handleCreate = async () => {
     if (!user) { setShowAuth(true); return; }
@@ -18,6 +22,32 @@ export function Playlists() {
     setNewName('');
     setShowCreate(false);
   };
+
+  const selected = playlists.find((p) => p.id === selectedPlaylist);
+
+  if (selected) {
+    return (
+      <div>
+        <button
+          onClick={() => setSelectedPlaylist(null)}
+          className="px-4 py-2 text-[#888] hover:text-white text-sm"
+        >
+          ← Back to Playlists
+        </button>
+        <PlaylistEditor
+          playlist={selected}
+          availableTracks={tracks}
+          onAddTrack={(trackId) => addTrackToPlaylist(selected.id, trackId, (selected.tracks?.length ?? 0))}
+          onRemoveTrack={(trackId) => removeTrackFromPlaylist(selected.id, trackId)}
+          onReorder={(trackIds) => reorderTracks(selected.id, trackIds)}
+          onPlay={() => {
+            // Play playlist: iterate tracks, set BPM per track
+            console.log('Playing playlist:', selected.name);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4">
@@ -66,7 +96,7 @@ export function Playlists() {
             <PlaylistCard
               key={playlist.id}
               playlist={playlist}
-              onClick={() => {}}
+              onClick={() => setSelectedPlaylist(playlist.id)}
               onDelete={() => deletePlaylist(playlist.id)}
             />
           ))}

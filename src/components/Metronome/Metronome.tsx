@@ -1,23 +1,26 @@
 import { useMetronome } from '@/hooks/useMetronome';
 import { TapWheel } from './TapWheel';
+import { BpmDisplay } from './BpmDisplay';
 import { SubdivisionButtons } from './SubdivisionButtons';
 import { PlayBar } from './PlayBar';
 import { BottomToolbar } from './BottomToolbar';
 import { tapTempoToBpm } from '@/lib/bpmMath';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
+import type { TimeSignature } from '@/types';
+import { SettingsPanel } from './SettingsPanel';
+
+const TIME_SIGNATURES: TimeSignature[] = ['2/4', '3/4', '4/4', '6/8'];
 
 export function Metronome() {
   const metro = useMetronome(100);
-  const [, setTapTimes] = useState<number[]>([]);
+  const tapTimesRef = useRef<number[]>([]);
+  const [showSettings, setShowSettings] = useState(false);
 
   const handleTap = useCallback(() => {
     const now = Date.now();
-    setTapTimes((prev) => {
-      const next = [...prev, now].slice(-6);
-      const newBpm = tapTempoToBpm(next);
-      if (newBpm !== null) metro.setBpm(newBpm);
-      return next;
-    });
+    tapTimesRef.current = [...tapTimesRef.current, now].slice(-6);
+    const newBpm = tapTempoToBpm(tapTimesRef.current);
+    if (newBpm !== null) metro.setBpm(newBpm);
   }, [metro]);
 
   return (
@@ -26,37 +29,54 @@ export function Metronome() {
       <div className="px-4 py-3 border-b border-[#222]">
         <div className="flex items-center justify-between mb-3">
           <div className="w-9 h-9 flex items-center justify-center text-[#888]">♪</div>
-          <div className="text-center flex-1">
-            <div className="text-4xl font-bold text-white tabular-nums">{metro.bpm}</div>
-          </div>
+          <BpmDisplay
+            bpm={metro.bpm}
+            onIncrement={() => metro.setBpm(metro.bpm + 1)}
+            onDecrement={() => metro.setBpm(metro.bpm - 1)}
+          />
           <div className="flex gap-1">
             <div className="w-9 h-9 flex items-center justify-center text-[#888]">♪</div>
-            <div className="w-9 h-9 flex items-center justify-center text-[#888]">⚙</div>
+            <button onClick={() => setShowSettings(true)} className="w-9 h-9 flex items-center justify-center text-[#888] hover:text-white">⚙</button>
           </div>
         </div>
+
+        {/* Time signature selector */}
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <span className="text-xs text-[#888]">Time Signature:</span>
+          <select
+            value={metro.timeSignature}
+            onChange={(e) => metro.setTimeSignature(e.target.value as TimeSignature)}
+            className="bg-[#1a1a1a] border border-[#2a2a2a] text-white text-xs rounded px-2 py-1 focus:outline-none focus:border-[#00e0c6]"
+          >
+            {TIME_SIGNATURES.map((ts) => (
+              <option key={ts} value={ts}>{ts}</option>
+            ))}
+          </select>
+        </div>
+
         <div className="flex items-center justify-center gap-2">
-          <button
-            onClick={() => metro.setBpm(metro.bpm - 1)}
-            className="w-9 h-9 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center"
-          >
-            −
-          </button>
           <PlayBar isPlaying={metro.isPlaying} onToggle={metro.toggle} />
-          <button
-            onClick={() => metro.setBpm(metro.bpm + 1)}
-            className="w-9 h-9 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center"
-          >
-            +
-          </button>
-          <button className="w-9 h-9 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center text-xs">
-            {metro.timeSignature}
-          </button>
         </div>
       </div>
 
-      {/* Tap wheel */}
-      <div className="flex-1 flex items-center justify-center p-4 min-h-0">
-        <TapWheel onTap={handleTap} />
+      {/* Tap wheel + visual beat indicator */}
+      <div className="flex-1 flex flex-col items-center justify-center p-4 min-h-0 gap-4">
+        <TapWheel onTap={handleTap} onRotate={(delta) => metro.setBpm(metro.bpm + delta)} />
+        {/* Visual beat indicator */}
+        <div className="flex gap-2">
+          {Array.from({ length: parseInt(metro.timeSignature.split('/')[0]) }).map((_, i) => (
+            <div
+              key={i}
+              className={`w-3 h-3 rounded-full transition-all duration-100 ${
+                metro.currentBeat === i
+                  ? i === 0
+                    ? 'bg-[#00e0c6] scale-125 shadow-[0_0_8px_rgba(0,224,198,0.5)]'
+                    : 'bg-white scale-110'
+                  : 'bg-[#333]'
+              }`}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Bottom section */}
@@ -66,6 +86,8 @@ export function Metronome() {
         </div>
         <BottomToolbar timeDisplay="0:00" />
       </div>
+
+      <SettingsPanel isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   );
 }

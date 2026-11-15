@@ -4,7 +4,6 @@ const NAV_ITEMS = [
   { path: '/', label: 'Metronome', icon: '♪' },
   { path: '/library', label: 'Library', icon: '☰' },
   { path: '/playlists', label: 'Playlists', icon: '♫' },
-  { path: '/profile', label: 'Profile', icon: '👤' },
 ];
 
 export function BottomNav() {
