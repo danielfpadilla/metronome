@@ -19,6 +19,7 @@ create table if not exists public.tracks (
   storage_path text,
   cover_art_url text,
   source text not null check (source in ('youtube', 'manual')),
+  status text check (status in ('processing', 'ready', 'failed', 'manual_bpm_pending')) default 'ready',
   created_at timestamptz default now()
 );
 

@@ -30,9 +30,14 @@ export function useTracks() {
 
     if (error) throw error;
 
-    await supabase.functions.invoke('extract-bpm', {
+    const { error: fnError } = await supabase.functions.invoke('extract-bpm', {
       body: { youtube_url: url, track_id: track.id },
     });
+
+    if (fnError) {
+      await supabase.from('tracks').update({ status: 'failed' }).eq('id', track.id);
+      throw new Error(fnError.message || 'BPM extraction failed');
+    }
 
     await fetchTracks();
     return track as Track;

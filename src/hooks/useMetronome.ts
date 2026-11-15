@@ -30,6 +30,7 @@ export function useMetronome(initialBpm = 100): MetronomeControls {
   const bpmRef = useRef(bpm);
   const tsRef = useRef(timeSignature);
   const subRef = useRef(subdivision);
+  const isPlayingRef = useRef(false);
 
   useEffect(() => { bpmRef.current = bpm; }, [bpm]);
   useEffect(() => { tsRef.current = timeSignature; }, [timeSignature]);
@@ -54,6 +55,7 @@ export function useMetronome(initialBpm = 100): MetronomeControls {
   }, []);
 
   const scheduler = useCallback(() => {
+    if (!isPlayingRef.current) return;
     const ctx = audioCtxRef.current;
     if (!ctx) return;
     const bpmVal = bpmRef.current;
@@ -83,11 +85,13 @@ export function useMetronome(initialBpm = 100): MetronomeControls {
     if (ctx.state === 'suspended') ctx.resume();
     beatCountRef.current = 0;
     nextBeatTimeRef.current = ctx.currentTime + 0.05;
+    isPlayingRef.current = true;
     setIsPlaying(true);
     scheduler();
   }, [isPlaying, scheduler]);
 
   const stop = useCallback(() => {
+    isPlayingRef.current = false;
     setIsPlaying(false);
     if (timerRef.current) {
       clearTimeout(timerRef.current);

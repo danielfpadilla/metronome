@@ -1,4 +1,5 @@
 import { BottomNav } from './BottomNav';
+import { Link } from 'react-router-dom';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -16,14 +17,14 @@ export function AppShell({ children }: AppShellProps) {
             { path: '/library', label: 'Library', icon: '☰' },
             { path: '/playlists', label: 'Playlists', icon: '♫' },
           ].map((item) => (
-            <a
+            <Link
               key={item.path}
-              href={item.path}
+              to={item.path}
               className="flex items-center gap-3 px-3 py-2 rounded-lg text-[#888] hover:text-white hover:bg-[#0f0f14] transition-colors"
             >
               <span>{item.icon}</span>
               <span>{item.label}</span>
-            </a>
+            </Link>
           ))}
         </nav>
       </aside>

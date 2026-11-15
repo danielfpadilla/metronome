@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthContext } from './AuthProvider';
 
 interface AuthModalProps {
@@ -13,6 +13,15 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setEmail('');
+      setSent(false);
+      setError(null);
+      setLoading(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

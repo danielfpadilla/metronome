@@ -21,10 +21,12 @@ export function isOnline(): boolean {
 }
 
 export function onConnectivityChange(callback: (online: boolean) => void) {
-  window.addEventListener('online', () => callback(true));
-  window.addEventListener('offline', () => callback(false));
+  const handleOnline = () => callback(true);
+  const handleOffline = () => callback(false);
+  window.addEventListener('online', handleOnline);
+  window.addEventListener('offline', handleOffline);
   return () => {
-    window.removeEventListener('online', () => callback(true));
-    window.removeEventListener('offline', () => callback(false));
+    window.removeEventListener('online', handleOnline);
+    window.removeEventListener('offline', handleOffline);
   };
 }

@@ -12,7 +12,7 @@ export function useAuth() {
         setUser({ id: session.user.id, email: session.user.email!, created_at: session.user.created_at });
       }
       setLoading(false);
-    });
+    }).catch(() => setLoading(false));
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
