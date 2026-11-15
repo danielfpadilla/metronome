@@ -1,6 +1,5 @@
 import { useMetronome } from '@/hooks/useMetronome';
 import { TapWheel } from './TapWheel';
-import { BpmDisplay } from './BpmDisplay';
 import { SubdivisionButtons } from './SubdivisionButtons';
 import { PlayBar } from './PlayBar';
 import { BottomToolbar } from './BottomToolbar';
@@ -9,7 +8,7 @@ import { useState, useCallback } from 'react';
 
 export function Metronome() {
   const metro = useMetronome(100);
-  const [tapTimes, setTapTimes] = useState<number[]>([]);
+  const [, setTapTimes] = useState<number[]>([]);
 
   const handleTap = useCallback(() => {
     const now = Date.now();
