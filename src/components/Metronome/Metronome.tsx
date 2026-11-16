@@ -37,6 +37,12 @@ export function Metronome() {
     }
   }, [location.search, metro]);
 
+  // Derived display values
+  const elapsedSeconds = metro.currentBeat * (60 / metro.bpm);
+  const minutes = Math.floor(elapsedSeconds / 60);
+  const seconds = Math.floor(elapsedSeconds % 60);
+  const timeDisplay = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
   return (
     <div className="flex flex-col h-full bg-[#111]">
       {/* Top controls */}
@@ -98,7 +104,7 @@ export function Metronome() {
         <div className="mb-3">
           <SubdivisionButtons value={metro.subdivision} onChange={metro.setSubdivision} />
         </div>
-        <BottomToolbar timeDisplay="0:00" />
+        <BottomToolbar timeDisplay={timeDisplay} isPlaying={metro.isPlaying} onToggle={metro.toggle} />
       </div>
 
       <SettingsPanel isOpen={showSettings} onClose={() => setShowSettings(false)} />
