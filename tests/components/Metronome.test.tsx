@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { Metronome } from '@/components/Metronome/Metronome';
 
 vi.mock('@/hooks/useMetronome', () => ({
@@ -12,15 +13,27 @@ vi.mock('@/hooks/useMetronome', () => ({
 
 describe('Metronome', () => {
   it('renders BPM display', () => {
-    render(<Metronome />);
+    render(
+      <MemoryRouter>
+        <Metronome />
+      </MemoryRouter>
+    );
     expect(screen.getByText('100')).toBeInTheDocument();
   });
   it('renders play button', () => {
-    render(<Metronome />);
+    render(
+      <MemoryRouter>
+        <Metronome />
+      </MemoryRouter>
+    );
     expect(screen.getAllByRole('button', { name: /play/i }).length).toBeGreaterThan(0);
   });
   it('renders tap wheel', () => {
-    render(<Metronome />);
+    render(
+      <MemoryRouter>
+        <Metronome />
+      </MemoryRouter>
+    );
     expect(screen.getByTestId('tap-wheel')).toBeInTheDocument();
   });
 });

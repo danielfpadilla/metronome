@@ -5,7 +5,8 @@ import { SubdivisionButtons } from './SubdivisionButtons';
 import { PlayBar } from './PlayBar';
 import { BottomToolbar } from './BottomToolbar';
 import { tapTempoToBpm } from '@/lib/bpmMath';
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import type { TimeSignature } from '@/types';
 import { SettingsPanel } from './SettingsPanel';
 
@@ -15,6 +16,7 @@ export function Metronome() {
   const metro = useMetronome(100);
   const tapTimesRef = useRef<number[]>([]);
   const [showSettings, setShowSettings] = useState(false);
+  const location = useLocation();
 
   const handleTap = useCallback(() => {
     const now = Date.now();
@@ -22,6 +24,18 @@ export function Metronome() {
     const newBpm = tapTempoToBpm(tapTimesRef.current);
     if (newBpm !== null) metro.setBpm(newBpm);
   }, [metro]);
+
+  // Apply BPM from ?bpm= URL param (e.g., when a track card sets the tempo)
+  useEffect(() => {
+    const bpmParam = new URLSearchParams(location.search).get('bpm');
+    if (!bpmParam) return;
+    const bpm = Number(bpmParam);
+    if (!Number.isNaN(bpm)) {
+      metro.setBpm(bpm);
+      // Clear the param so refreshes/re-renders don't reapply it
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [location.search, metro]);
 
   return (
     <div className="flex flex-col h-full bg-[#111]">

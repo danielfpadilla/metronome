@@ -1,6 +1,6 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTracks } from '@/hooks/useTracks';
-// Auth handled in AddTrackModal
 import { TrackCard } from './TrackCard';
 import { AddTrackModal } from './AddTrackModal';
 
@@ -10,6 +10,7 @@ export function Library() {
   const [search, setSearch] = useState('');
   const [sourceFilter, setSourceFilter] = useState<'all' | 'youtube' | 'manual'>('all');
   const [bpmRange, setBpmRange] = useState<[number, number]>([0, 240]);
+  const navigate = useNavigate();
 
   const filtered = tracks.filter((t) => {
     const matchesSearch = t.title.toLowerCase().includes(search.toLowerCase());
@@ -75,6 +76,7 @@ export function Library() {
               key={track.id}
               track={track}
               onDelete={() => deleteTrack(track.id)}
+              onSelectTrack={(bpm) => navigate(`/?bpm=${bpm}`)}
             />
           ))}
         </div>

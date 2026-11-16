@@ -5,9 +5,10 @@ interface TrackCardProps {
   track: Track;
   onClick?: () => void;
   onDelete?: () => void;
+  onSelectTrack?: (bpm: number, timeSignature: string) => void;
 }
 
-export function TrackCard({ track, onClick, onDelete }: TrackCardProps) {
+export function TrackCard({ track, onClick, onDelete, onSelectTrack }: TrackCardProps) {
   const videoId = track.youtube_url ? extractVideoId(track.youtube_url) : null;
   const coverUrl = videoId ? getThumbnailUrl(videoId) : track.cover_art_url;
 
@@ -38,6 +39,14 @@ export function TrackCard({ track, onClick, onDelete }: TrackCardProps) {
           className="mt-2 text-xs text-red-400 hover:text-red-300"
         >
           Delete
+        </button>
+      )}
+      {onSelectTrack && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onSelectTrack(track.bpm ?? 100, '4/4'); }}
+          className="mt-2 text-xs text-[#00e0c6] hover:text-[#00b8a3]"
+        >
+          Set BPM
         </button>
       )}
     </div>
