@@ -8,9 +8,11 @@ interface PlaylistEditorProps {
   onRemoveTrack: (trackId: string) => void;
   onReorder: (trackIds: string[]) => void;
   onPlay: () => void;
+  firstTrackTitle?: string;
+  firstTrackBpm?: number;
 }
 
-export function PlaylistEditor({ playlist, availableTracks, onAddTrack, onRemoveTrack, onReorder, onPlay }: PlaylistEditorProps) {
+export function PlaylistEditor({ playlist, availableTracks, onAddTrack, onRemoveTrack, onReorder, onPlay, firstTrackTitle, firstTrackBpm }: PlaylistEditorProps) {
   const [selectedTrack, setSelectedTrack] = useState('');
 
   const tracks = playlist.tracks || [];
@@ -41,6 +43,19 @@ export function PlaylistEditor({ playlist, availableTracks, onAddTrack, onRemove
           ▶ Play Playlist
         </button>
       </div>
+
+      {firstTrackTitle && (
+        <div className="mb-4 p-3 bg-[#1a1a24] border border-[#333] rounded-lg flex items-center justify-between">
+          <div>
+            <p className="text-xs text-[#888]">First track to play</p>
+            <p className="text-white text-sm truncate">{firstTrackTitle}</p>
+          </div>
+          <div className="text-right">
+            <span className="text-[#00e0c6] font-bold">{firstTrackBpm} BPM</span>
+            <span className="text-[#888] text-xs ml-2">4/4</span>
+          </div>
+        </div>
+      )}
 
       {/* Add track */}
       <div className="flex gap-2 mb-4">

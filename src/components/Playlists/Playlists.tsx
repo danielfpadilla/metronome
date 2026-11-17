@@ -5,11 +5,13 @@ import { PlaylistCard } from './PlaylistCard';
 import { PlaylistEditor } from './PlaylistEditor';
 import { useAuthContext } from '@/components/Auth/AuthProvider';
 import { AuthModal } from '@/components/Auth/AuthModal';
+import { useNavigate } from 'react-router-dom';
 
 export function Playlists() {
   const { playlists, loading, createPlaylist, deletePlaylist, addTrackToPlaylist, removeTrackFromPlaylist, reorderTracks } = usePlaylists();
   const { tracks } = useTracks();
   const { user } = useAuthContext();
+  const navigate = useNavigate();
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
   const [showAuth, setShowAuth] = useState(false);
@@ -26,6 +28,13 @@ export function Playlists() {
   const selected = playlists.find((p) => p.id === selectedPlaylist);
 
   if (selected) {
+    const firstTrack = selected.tracks?.[0];
+    const firstBpm = firstTrack?.track?.bpm ?? 100;
+
+    const handlePlay = () => {
+      navigate(`/?bpm=${firstBpm}`);
+    };
+
     return (
       <div>
         <button
@@ -40,10 +49,9 @@ export function Playlists() {
           onAddTrack={(trackId) => addTrackToPlaylist(selected.id, trackId, (selected.tracks?.length ?? 0))}
           onRemoveTrack={(trackId) => removeTrackFromPlaylist(selected.id, trackId)}
           onReorder={(trackIds) => reorderTracks(selected.id, trackIds)}
-          onPlay={() => {
-            // Play playlist: iterate tracks, set BPM per track
-            console.log('Playing playlist:', selected.name);
-          }}
+          onPlay={handlePlay}
+          firstTrackTitle={firstTrack?.track?.title}
+          firstTrackBpm={firstBpm}
         />
       </div>
     );
