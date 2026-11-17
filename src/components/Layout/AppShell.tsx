@@ -1,12 +1,17 @@
 import { BottomNav } from './BottomNav';
 import { Link } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useAuthContext } from '@/components/Auth/AuthProvider';
+import { AuthModal } from '@/components/Auth/AuthModal';
 
 interface AppShellProps {
   children: React.ReactNode;
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const { user, signOut } = useAuthContext();
+  const [showAuth, setShowAuth] = useState(false);
+
   // Apply saved theme from localStorage on mount
   useEffect(() => {
     try {
@@ -39,6 +44,28 @@ export function AppShell({ children }: AppShellProps) {
             </Link>
           ))}
         </nav>
+
+        {/* Auth section */}
+        <div className="mt-auto pt-4 border-t border-[#333]">
+          {user ? (
+            <div className="space-y-2">
+              <p className="text-xs text-[#888] truncate">{user.email}</p>
+              <button
+                onClick={() => signOut()}
+                className="w-full px-3 py-2 text-xs text-[#888] hover:text-white border border-[#333] rounded-lg transition-colors"
+              >
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowAuth(true)}
+              className="w-full px-3 py-2 bg-[#00e0c6] text-[#0f0f14] font-semibold rounded-lg text-sm hover:shadow-[0_0_12px_rgba(0,224,198,0.3)] transition-shadow"
+            >
+              Sign in
+            </button>
+          )}
+        </div>
       </aside>
 
       {/* Main content */}
@@ -47,6 +74,18 @@ export function AppShell({ children }: AppShellProps) {
       </main>
 
       <BottomNav />
+
+      {/* Mobile auth button (floating) */}
+      {!user && (
+        <button
+          onClick={() => setShowAuth(true)}
+          className="fixed bottom-20 right-4 md:hidden z-50 px-4 py-2 bg-[#00e0c6] text-[#0f0f14] font-semibold rounded-full text-sm shadow-lg hover:shadow-[0_0_12px_rgba(0,224,198,0.3)] transition-shadow"
+        >
+          Sign in
+        </button>
+      )}
+
+      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
     </div>
   );
 }
