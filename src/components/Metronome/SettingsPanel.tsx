@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 export interface MetronomeSettings {
   countIn: boolean;
   pendulum: boolean;
@@ -26,6 +28,10 @@ const TOGGLES: { key: keyof MetronomeSettings; label: string }[] = [
 ];
 
 export function SettingsPanel({ isOpen, onClose, settings, onChange }: SettingsPanelProps) {
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', settings.theme === 'dark');
+  }, [settings.theme]);
+
   if (!isOpen) return null;
 
   return (

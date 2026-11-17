@@ -1,11 +1,23 @@
 import { BottomNav } from './BottomNav';
 import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
 
 interface AppShellProps {
   children: React.ReactNode;
 }
 
 export function AppShell({ children }: AppShellProps) {
+  // Apply saved theme from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('metronome-settings');
+      const theme = saved ? JSON.parse(saved).theme : 'dark';
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+    } catch {
+      /* ignore quota errors */
+    }
+  }, []);
+
   return (
     <div className="flex h-screen bg-[#0f0f14]">
       {/* Desktop sidebar */}
