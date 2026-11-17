@@ -1,22 +1,61 @@
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useMetronome } from '@/hooks/useMetronome';
 import { TapWheel } from './TapWheel';
 import { BpmDisplay } from './BpmDisplay';
 import { SubdivisionButtons } from './SubdivisionButtons';
 import { PlayBar } from './PlayBar';
 import { BottomToolbar } from './BottomToolbar';
+import { SettingsPanel, type MetronomeSettings } from './SettingsPanel';
 import { tapTempoToBpm } from '@/lib/bpmMath';
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import type { TimeSignature } from '@/types';
-import { SettingsPanel } from './SettingsPanel';
 
 const TIME_SIGNATURES: TimeSignature[] = ['2/4', '3/4', '4/4', '6/8'];
 
+const DEFAULT_SETTINGS: MetronomeSettings = {
+  countIn: false,
+  pendulum: false,
+  flashAccent: true,
+  flashScreen: false,
+  flashNumbers: false,
+  theme: 'dark',
+  accent1: 80,
+  accent2: 50,
+  accent3: 50,
+};
+
+const STORAGE_KEY = 'metronome-settings';
+
+function loadSettings(): MetronomeSettings {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } : DEFAULT_SETTINGS;
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+}
+
 export function Metronome() {
-  const metro = useMetronome(100);
+  const [settings, setSettings] = useState<MetronomeSettings>(loadSettings);
   const tapTimesRef = useRef<number[]>([]);
   const [showSettings, setShowSettings] = useState(false);
   const location = useLocation();
+
+  const metro = useMetronome(100, {
+    countIn: settings.countIn,
+    accentVolume: settings.accent1 / 100,
+    beatVolume: settings.accent2 / 100,
+    subdivisionVolume: settings.accent3 / 100,
+  });
+
+  // Persist settings
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    } catch {
+      /* ignore quota errors */
+    }
+  }, [settings]);
 
   const handleTap = useCallback(() => {
     const now = Date.now();
@@ -32,31 +71,45 @@ export function Metronome() {
     const bpm = Number(bpmParam);
     if (!Number.isNaN(bpm)) {
       metro.setBpm(bpm);
-      // Clear the param so refreshes/re-renders don't reapply it
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, [location.search, metro]);
 
-  // Derived display values
+  // Elapsed time display
   const elapsedSeconds = metro.currentBeat * (60 / metro.bpm);
   const minutes = Math.floor(elapsedSeconds / 60);
   const seconds = Math.floor(elapsedSeconds % 60);
   const timeDisplay = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  const countInActive = metro.countInBeat !== null;
+  const displayTime = countInActive ? `Count-in ${metro.countInBeat}` : timeDisplay;
+
+  const flashScreenActive = settings.flashScreen && metro.isPlaying && metro.currentBeat === 0;
+  const flashNumbers = settings.flashNumbers && metro.isPlaying && metro.currentBeat === 0;
 
   return (
-    <div className="flex flex-col h-full bg-[#111]">
+    <div className="relative flex flex-col h-full bg-[#111]">
+      {/* Fullscreen accent flash */}
+      {flashScreenActive && <div key={metro.currentBeat} className="flash-overlay" />}
+
       {/* Top controls */}
       <div className="px-4 py-3 border-b border-[#222]">
         <div className="flex items-center justify-between mb-3">
           <div className="w-9 h-9 flex items-center justify-center text-[#888]">♪</div>
           <BpmDisplay
             bpm={metro.bpm}
+            flash={flashNumbers}
             onIncrement={() => metro.setBpm(metro.bpm + 1)}
             onDecrement={() => metro.setBpm(metro.bpm - 1)}
           />
           <div className="flex gap-1">
             <div className="w-9 h-9 flex items-center justify-center text-[#888]">♪</div>
-            <button onClick={() => setShowSettings(true)} className="w-9 h-9 flex items-center justify-center text-[#888] hover:text-white">⚙</button>
+            <button
+              onClick={() => setShowSettings(true)}
+              className="w-9 h-9 flex items-center justify-center text-[#888] hover:text-white"
+              aria-label="Settings"
+            >
+              ⚙
+            </button>
           </div>
         </div>
 
@@ -81,7 +134,17 @@ export function Metronome() {
 
       {/* Tap wheel + visual beat indicator */}
       <div className="flex-1 flex flex-col items-center justify-center p-4 min-h-0 gap-4">
-        <TapWheel onTap={handleTap} onRotate={(delta) => metro.setBpm(metro.bpm + delta)} />
+        {settings.pendulum ? (
+          <div className="pendulum">
+            <div
+              className="pendulum-rod"
+              style={{ animationDuration: `${2 * (60 / metro.bpm)}s` }}
+            />
+            <div className="pendulum-weight" />
+          </div>
+        ) : (
+          <TapWheel onTap={handleTap} onRotate={(delta) => metro.setBpm(metro.bpm + delta)} />
+        )}
         {/* Visual beat indicator */}
         <div className="flex gap-2">
           {Array.from({ length: parseInt(metro.timeSignature.split('/')[0]) }).map((_, i) => (
@@ -104,10 +167,15 @@ export function Metronome() {
         <div className="mb-3">
           <SubdivisionButtons value={metro.subdivision} onChange={metro.setSubdivision} />
         </div>
-        <BottomToolbar timeDisplay={timeDisplay} isPlaying={metro.isPlaying} onToggle={metro.toggle} />
+        <BottomToolbar timeDisplay={displayTime} isPlaying={metro.isPlaying} onToggle={metro.toggle} />
       </div>
 
-      <SettingsPanel isOpen={showSettings} onClose={() => setShowSettings(false)} />
+      <SettingsPanel
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        settings={settings}
+        onChange={(patch) => setSettings((prev) => ({ ...prev, ...patch }))}
+      />
     </div>
   );
 }

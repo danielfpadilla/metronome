@@ -4,9 +4,10 @@ interface BpmDisplayProps {
   bpm: number;
   onIncrement: () => void;
   onDecrement: () => void;
+  flash?: boolean;
 }
 
-export function BpmDisplay({ bpm, onIncrement, onDecrement }: BpmDisplayProps) {
+export function BpmDisplay({ bpm, onIncrement, onDecrement, flash }: BpmDisplayProps) {
   return (
     <div className="flex items-center justify-center gap-4">
       <button
@@ -17,7 +18,7 @@ export function BpmDisplay({ bpm, onIncrement, onDecrement }: BpmDisplayProps) {
         −
       </button>
       <div className="text-center">
-        <div className="text-4xl font-bold text-white tabular-nums leading-none">{bpm}</div>
+        <div key={flash ? bpm : undefined} className={`text-4xl font-bold text-white tabular-nums leading-none ${flash ? 'beat-flash-numbers' : ''}`}>{bpm}</div>
         <div className="text-xs text-[#666] uppercase tracking-wider mt-1">{getMusicalTerm(bpm)}</div>
       </div>
       <button
