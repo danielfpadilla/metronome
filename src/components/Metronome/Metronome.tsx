@@ -23,6 +23,7 @@ const DEFAULT_SETTINGS: MetronomeSettings = {
   accentMid: 60,
   accentHigh: 100,
   soundType: 'woodblock',
+  accentPattern: [3, 2, 2, 2],
 };
 
 const STORAGE_KEY = 'metronome-settings';
@@ -44,10 +45,13 @@ export function Metronome() {
 
   const metro = useMetronome(100, {
     countIn: settings.countIn,
-    accentVolume: settings.accentHigh / 100,
-    beatVolume: settings.accentMid / 100,
-    subdivisionVolume: settings.accentLow / 100,
+    accentVolumes: {
+      low: settings.accentLow / 100,
+      mid: settings.accentMid / 100,
+      high: settings.accentHigh / 100,
+    },
     soundType: settings.soundType,
+    accentPattern: settings.accentPattern,
   });
 
   // Persist settings
@@ -178,6 +182,7 @@ export function Metronome() {
         settings={settings}
         onChange={(patch) => setSettings((prev) => ({ ...prev, ...patch }))}
         previewSound={metro.previewSound}
+        timeSignature={metro.timeSignature}
       />
     </div>
   );

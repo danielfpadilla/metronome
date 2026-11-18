@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { beatsPerMeasure, subdivisionInterval, getBeatAccent } from '@/lib/bpmMath';
+import { beatsPerMeasure, subdivisionInterval } from '@/lib/bpmMath';
 import type { TimeSignature, Subdivision } from '@/types';
 
 export interface MetronomeControls {
@@ -15,15 +15,14 @@ export interface MetronomeControls {
   stop: () => void;
   toggle: () => void;
   countInBeat: number | null;
-  previewSound: (accent: boolean, volume: number) => void;
+  previewSound: (level: number, volume: number) => void;
 }
 
 export interface UseMetronomeOptions {
   countIn?: boolean;
-  accentVolume?: number;
-  beatVolume?: number;
-  subdivisionVolume?: number;
+  accentVolumes?: { low: number; mid: number; high: number };
   soundType?: 'woodblock' | 'beep' | 'click';
+  accentPattern?: number[]; // 0=off, 1=low, 2=mid, 3=high per beat
 }
 
 export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): MetronomeControls {
@@ -57,12 +56,10 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
     setBpmState(Math.max(40, Math.min(240, Math.round(v))));
   }, []);
 
-  // Synthesize a woodblock-like click sound
-  const playWoodblock = useCallback((ctx: AudioContext, time: number, accent: boolean, volume: number) => {
-    const freq = accent ? 1200 : 800;
-    const gainVal = accent ? Math.max(0.001, volume) : Math.max(0.001, volume * 0.6);
+  const playWoodblock = useCallback((ctx: AudioContext, time: number, volume: number) => {
+    const gainVal = Math.max(0.001, volume);
+    const freq = 1000;
 
-    // Main tone (triangle wave for woody quality)
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'triangle';
@@ -74,7 +71,6 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
     osc.start(time);
     osc.stop(time + 0.06);
 
-    // Noise burst for attack texture
     const bufferSize = Math.floor(ctx.sampleRate * 0.02);
     const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const noiseData = noiseBuffer.getChannelData(0);
@@ -97,13 +93,12 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
     noise.stop(time + 0.02);
   }, []);
 
-  // Synthesize a simple beep sound
-  const playBeep = useCallback((ctx: AudioContext, time: number, accent: boolean, volume: number) => {
+  const playBeep = useCallback((ctx: AudioContext, time: number, volume: number) => {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.value = accent ? 1000 : 800;
-    gain.gain.setValueAtTime(accent ? Math.max(0.001, volume) : Math.max(0.001, volume * 0.6), time);
+    osc.frequency.value = 900;
+    gain.gain.setValueAtTime(Math.max(0.001, volume), time);
     gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -111,13 +106,12 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
     osc.stop(time + 0.05);
   }, []);
 
-  // Synthesize a click sound
-  const playClickSound = useCallback((ctx: AudioContext, time: number, accent: boolean, volume: number) => {
+  const playClickSound = useCallback((ctx: AudioContext, time: number, volume: number) => {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'square';
-    osc.frequency.value = accent ? 1500 : 1000;
-    gain.gain.setValueAtTime(accent ? Math.max(0.001, volume) : Math.max(0.001, volume * 0.5), time);
+    osc.frequency.value = 1200;
+    gain.gain.setValueAtTime(Math.max(0.001, volume), time);
     gain.gain.exponentialRampToValueAtTime(0.001, time + 0.03);
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -125,31 +119,51 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
     osc.stop(time + 0.03);
   }, []);
 
-  const playSound = useCallback((ctx: AudioContext, time: number, accent: boolean, volume: number, soundType: string) => {
-    switch (soundType) {
-      case 'woodblock':
-        playWoodblock(ctx, time, accent, volume);
+  const playLevel = useCallback((ctx: AudioContext, time: number, level: number, volumes: { low: number; mid: number; high: number }, soundType: string) => {
+    if (level === 0) return; // silent
+
+    let volume: number;
+    switch (level) {
+      case 1: // low
+        volume = volumes.low;
         break;
-      case 'beep':
-        playBeep(ctx, time, accent, volume);
+      case 2: // mid
+        volume = volumes.mid;
         break;
-      case 'click':
-        playClickSound(ctx, time, accent, volume);
+      case 3: // high
+        volume = volumes.high;
         break;
       default:
-        playWoodblock(ctx, time, accent, volume);
+        return;
+    }
+
+    switch (soundType) {
+      case 'woodblock':
+        playWoodblock(ctx, time, volume);
+        break;
+      case 'beep':
+        playBeep(ctx, time, volume);
+        break;
+      case 'click':
+        playClickSound(ctx, time, volume);
+        break;
+      default:
+        playWoodblock(ctx, time, volume);
     }
   }, [playWoodblock, playBeep, playClickSound]);
 
-  const previewSound = useCallback((accent: boolean, volume: number) => {
+  const previewSound = useCallback((level: number, volume: number) => {
     if (!audioCtxRef.current) {
       audioCtxRef.current = new AudioContext();
     }
     const ctx = audioCtxRef.current;
     if (ctx.state === 'suspended') ctx.resume();
     const soundType = optionsRef.current.soundType || 'woodblock';
-    playSound(ctx, ctx.currentTime, accent, volume, soundType);
-  }, [playSound]);
+    const volumes = optionsRef.current.accentVolumes || { low: 0.3, mid: 0.6, high: 1.0 };
+    // Use the provided volume or the level's default
+    const actualVolume = volume > 0 ? volume : (level === 1 ? volumes.low : level === 2 ? volumes.mid : volumes.high);
+    playLevel(ctx, ctx.currentTime, level, { low: actualVolume, mid: actualVolume, high: actualVolume }, soundType);
+  }, [playLevel]);
 
   const scheduler = useCallback(() => {
     if (!isPlayingRef.current) return;
@@ -162,14 +176,14 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
     const beats = beatsPerMeasure(ts);
     const interval = subdivisionInterval(bpmVal, sub);
     const scheduleAhead = 0.1;
-    const accentVolume = opts.accentVolume ?? 0.8;
-    const beatVolume = opts.beatVolume ?? 0.5;
+    const volumes = opts.accentVolumes || { low: 0.3, mid: 0.6, high: 1.0 };
     const soundType = opts.soundType || 'woodblock';
+    const pattern = opts.accentPattern || [3, 2, 2, 2];
 
     while (nextBeatTimeRef.current < ctx.currentTime + scheduleAhead) {
       if (countInRef.current > 0) {
         const isDownbeat = countInRef.current === beats;
-        playSound(ctx, nextBeatTimeRef.current, isDownbeat, 0.5, soundType);
+        playLevel(ctx, nextBeatTimeRef.current, isDownbeat ? 3 : 1, volumes, soundType);
         setCountInBeat(beats - countInRef.current + 1);
         countInRef.current -= 1;
         nextBeatTimeRef.current += (60 / bpmVal);
@@ -177,20 +191,18 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
       }
       const beatInMeasure = beatCountRef.current % (beats * sub);
       const isMainBeat = beatInMeasure % sub === 0;
-      const isAccent = getBeatAccent(Math.floor(beatInMeasure / sub), ts) === 'accent' && isMainBeat;
-      playSound(
-        ctx,
-        nextBeatTimeRef.current,
-        isAccent,
-        isAccent ? accentVolume : (isMainBeat ? beatVolume : (opts.subdivisionVolume ?? 0.25)),
-        soundType,
-      );
-      setCurrentBeat(Math.floor(beatInMeasure / sub));
+      const beatIndex = Math.floor(beatInMeasure / sub);
+      const level = isMainBeat ? (pattern[beatIndex] ?? 2) : 1;
+
+      if (level > 0) {
+        playLevel(ctx, nextBeatTimeRef.current, level, volumes, soundType);
+      }
+      setCurrentBeat(beatIndex);
       nextBeatTimeRef.current += interval / 1000;
       beatCountRef.current += 1;
     }
     timerRef.current = window.setTimeout(scheduler, 25);
-  }, [playSound, subdivisionInterval]);
+  }, [playLevel, subdivisionInterval]);
 
   const start = useCallback(() => {
     if (isPlaying) return;

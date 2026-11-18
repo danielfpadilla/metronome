@@ -11,6 +11,7 @@ export interface MetronomeSettings {
   accentMid: number;
   accentHigh: number;
   soundType: 'woodblock' | 'beep' | 'click';
+  accentPattern: number[]; // 0=off, 1=low, 2=mid, 3=high per beat
 }
 
 interface SettingsPanelProps {
@@ -18,7 +19,8 @@ interface SettingsPanelProps {
   onClose: () => void;
   settings: MetronomeSettings;
   onChange: (patch: Partial<MetronomeSettings>) => void;
-  previewSound: (accent: boolean, volume: number) => void;
+  previewSound: (level: number, volume: number) => void;
+  timeSignature: string;
 }
 
 const TOGGLES: { key: keyof MetronomeSettings; label: string }[] = [
@@ -35,18 +37,36 @@ const SOUND_TYPES = [
   { value: 'click', label: 'Click' },
 ] as const;
 
-const ACCENT_LEVELS = [
-  { key: 'accentLow' as const, label: 'Low', desc: 'Subdivisions' },
-  { key: 'accentMid' as const, label: 'Mid', desc: 'Beats' },
-  { key: 'accentHigh' as const, label: 'High', desc: 'Downbeat' },
-];
+const LEVEL_LABELS = ['', 'Low', 'Mid', 'High'];
 
-export function SettingsPanel({ isOpen, onClose, settings, onChange, previewSound }: SettingsPanelProps) {
+export function SettingsPanel({ isOpen, onClose, settings, onChange, previewSound, timeSignature }: SettingsPanelProps) {
   useEffect(() => {
     document.documentElement.classList.toggle('dark', settings.theme === 'dark');
   }, [settings.theme]);
 
   if (!isOpen) return null;
+
+  const beatsPerMeasure = parseInt(timeSignature.split('/')[0]);
+  const pattern = settings.accentPattern.length >= beatsPerMeasure
+    ? settings.accentPattern.slice(0, beatsPerMeasure)
+    : [...settings.accentPattern, ...Array(beatsPerMeasure - settings.accentPattern.length).fill(1)];
+
+  const cycleLevel = (beatIndex: number) => {
+    const newPattern = [...pattern];
+    newPattern[beatIndex] = (newPattern[beatIndex] + 1) % 4;
+    // Pad to full length if needed
+    const fullPattern = [...newPattern];
+    while (fullPattern.length < settings.accentPattern.length) {
+      fullPattern.push(settings.accentPattern[fullPattern.length] ?? 1);
+    }
+    onChange({ accentPattern: fullPattern });
+    // Preview the new level
+    const level = newPattern[beatIndex];
+    if (level > 0) {
+      const volume = level === 1 ? settings.accentLow / 100 : level === 2 ? settings.accentMid / 100 : settings.accentHigh / 100;
+      previewSound(level, volume);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
@@ -117,51 +137,71 @@ export function SettingsPanel({ isOpen, onClose, settings, onChange, previewSoun
             </div>
           </div>
 
-          {/* Accent levels - block buttons */}
+          {/* Per-beat accent customizer */}
           <div className="pt-2 border-t border-[#333]">
-            <h3 className="text-sm font-semibold text-white mb-1">Accent Levels</h3>
-            <p className="text-xs text-[#888] mb-3">Click a block to preview. Volume applied per beat type.</p>
-            <div className="grid grid-cols-3 gap-2">
-              {ACCENT_LEVELS.map(({ key, label, desc }) => {
-                const volume = settings[key];
-                const isAccent = key === 'accentHigh';
+            <h3 className="text-sm font-semibold text-white mb-1">Beat Accents</h3>
+            <p className="text-xs text-[#888] mb-3">Click a beat to cycle: Off → Low → Mid → High</p>
+            <div className="flex gap-2 justify-center flex-wrap">
+              {Array.from({ length: beatsPerMeasure }).map((_, i) => {
+                const level = pattern[i] ?? 1;
                 return (
                   <button
-                    key={key}
-                    onClick={() => previewSound(isAccent, volume / 100)}
-                    className="flex flex-col items-center gap-1 p-3 rounded-lg border border-[#333] bg-[#0f0f14] hover:border-[#00e0c6] hover:bg-[#1a1a24] transition-colors group"
+                    key={i}
+                    onClick={() => cycleLevel(i)}
+                    className={`w-12 h-12 rounded-lg border-2 flex flex-col items-center justify-center transition-all ${
+                      level === 0
+                        ? 'border-[#333] bg-[#0f0f14] text-[#555]'
+                        : level === 1
+                        ? 'border-[#555] bg-[#1a1a24] text-[#888]'
+                        : level === 2
+                        ? 'border-[#888] bg-[#222] text-white'
+                        : 'border-[#00e0c6] bg-[#00e0c6]/20 text-[#00e0c6]'
+                    }`}
+                    aria-label={`Beat ${i + 1}: ${LEVEL_LABELS[level] || 'Off'}`}
                   >
-                    <span className="text-sm font-bold text-white group-hover:text-[#00e0c6] transition-colors">{label}</span>
-                    <span className="text-[10px] text-[#888]">{desc}</span>
-                    <div className="w-full h-1.5 bg-[#333] rounded-full mt-1 overflow-hidden">
-                      <div
-                        className="h-full bg-[#00e0c6] rounded-full transition-all"
-                        style={{ width: `${volume}%` }}
-                      />
-                    </div>
-                    <span className="text-[10px] text-[#888]">{volume}%</span>
+                    <span className="text-xs font-bold">{i + 1}</span>
+                    <span className="text-[9px]">{LEVEL_LABELS[level] || 'Off'}</span>
                   </button>
                 );
               })}
             </div>
-            {/* Volume sliders below blocks */}
-            <div className="mt-3 space-y-2">
-              {ACCENT_LEVELS.map(({ key, label }) => (
-                <div key={key} className="flex items-center gap-3">
-                  <span className="text-xs text-[#888] w-12">{label}</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={settings[key]}
-                    onChange={(e) => onChange({ [key]: Number(e.target.value) } as Partial<MetronomeSettings>)}
-                    className="flex-1 accent-[#00e0c6]"
-                    aria-label={`${label} volume`}
-                  />
-                  <span className="text-xs text-[#888] w-8 text-right">{settings[key]}%</span>
-                </div>
-              ))}
-            </div>
+          </div>
+
+          {/* Accent volume levels */}
+          <div className="pt-2 border-t border-[#333]">
+            <h3 className="text-sm font-semibold text-white mb-3">Accent Volumes</h3>
+            {(
+              [
+                { key: 'accentLow', label: 'Low' },
+                { key: 'accentMid', label: 'Mid' },
+                { key: 'accentHigh', label: 'High' },
+              ] as const
+            ).map(({ key, label }) => (
+              <div key={key} className="flex items-center gap-3 mb-2">
+                <span className="text-xs text-[#888] w-12">{label}</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={settings[key]}
+                  onChange={(e) => onChange({ [key]: Number(e.target.value) } as Partial<MetronomeSettings>)}
+                  className="flex-1 accent-[#00e0c6]"
+                  aria-label={`${label} volume`}
+                />
+                <span className="text-xs text-[#888] w-8 text-right">{settings[key]}%</span>
+                <button
+                  onClick={() => {
+                    const level = key === 'accentLow' ? 1 : key === 'accentMid' ? 2 : 3;
+                    previewSound(level, settings[key] / 100);
+                  }}
+                  className="w-8 h-8 rounded-full bg-[#0f0f14] border border-[#333] text-[#888] hover:text-[#00e0c6] hover:border-[#00e0c6] transition-colors flex items-center justify-center text-sm"
+                  aria-label={`Preview ${label}`}
+                  title={`Preview ${label}`}
+                >
+                  🔊
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       </div>
