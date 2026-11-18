@@ -9,13 +9,11 @@ describe('TapWheel', () => {
     expect(screen.getByText('Tap')).toBeInTheDocument();
   });
 
-  it('calls onTap when clicked without movement', () => {
+  it('calls onTap when tap button is clicked', () => {
     const onTap = vi.fn();
     render(<TapWheel onTap={onTap} />);
-    const wheel = screen.getByTestId('tap-wheel');
-    // Simulate a simple click (mousedown + mouseup without movement)
-    wheel.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 100, clientY: 100 }));
-    document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    const tapButton = screen.getByRole('button', { name: /tap to set tempo/i });
+    tapButton.click();
     expect(onTap).toHaveBeenCalled();
   });
 });

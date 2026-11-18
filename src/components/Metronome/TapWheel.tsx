@@ -24,14 +24,14 @@ export function TapWheel({ onTap, onRotate, size = 300 }: TapWheelProps) {
     return Math.atan2(clientY - cy, clientX - cx) * (180 / Math.PI);
   }, []);
 
-  const begin = useCallback((clientX: number, clientY: number) => {
+  const beginDrag = useCallback((clientX: number, clientY: number) => {
     isDragging.current = true;
     hasMoved.current = false;
     lastAngle.current = getAngle(clientX, clientY);
     setPressed(true);
   }, [getAngle]);
 
-  const update = useCallback((clientX: number, clientY: number) => {
+  const updateDrag = useCallback((clientX: number, clientY: number) => {
     if (!isDragging.current || lastAngle.current === null) return;
     const angle = getAngle(clientX, clientY);
     const rawDelta = angle - lastAngle.current;
@@ -45,42 +45,57 @@ export function TapWheel({ onTap, onRotate, size = 300 }: TapWheelProps) {
     }
   }, [getAngle, onRotate]);
 
-  const finish = useCallback(() => {
-    if (isDragging.current && !hasMoved.current) onTap();
+  const endDrag = useCallback(() => {
     isDragging.current = false;
     hasMoved.current = false;
     lastAngle.current = null;
     setPressed(false);
-  }, [onTap]);
+  }, []);
 
-  // Mouse
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    begin(e.clientX, e.clientY);
-    const onMove = (ev: MouseEvent) => update(ev.clientX, ev.clientY);
+  // Mouse drag on outer wheel (for rotation only)
+  const handleWheelMouseDown = useCallback((e: React.MouseEvent) => {
+    // Only start drag if not clicking on the center tap button
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-tap-button]')) return;
+    
+    beginDrag(e.clientX, e.clientY);
+    const onMove = (ev: MouseEvent) => updateDrag(ev.clientX, ev.clientY);
     const onUp = () => {
-      finish();
+      endDrag();
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
     };
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
-  }, [begin, update, finish]);
+  }, [beginDrag, updateDrag, endDrag]);
 
-  // Touch
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+  // Touch drag on outer wheel
+  const handleWheelTouchStart = useCallback((e: React.TouchEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-tap-button]')) return;
+    
     const t = e.touches[0];
     if (!t) return;
-    begin(t.clientX, t.clientY);
-  }, [begin]);
+    beginDrag(t.clientX, t.clientY);
+  }, [beginDrag]);
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+  const handleWheelTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isDragging.current) return;
     const t = e.touches[0];
     if (!t) return;
     e.preventDefault();
-    update(t.clientX, t.clientY);
-  }, [update]);
+    updateDrag(t.clientX, t.clientY);
+  }, [updateDrag]);
 
-  const handleTouchEnd = useCallback(() => finish(), [finish]);
+  const handleWheelTouchEnd = useCallback(() => {
+    endDrag();
+  }, [endDrag]);
+
+  // Tap button click handler
+  const handleTapClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onTap();
+  }, [onTap]);
 
   // Tick marks around the outer dial
   const ticks = Array.from({ length: TICK_COUNT }).map((_, i) => {
@@ -102,16 +117,18 @@ export function TapWheel({ onTap, onRotate, size = 300 }: TapWheelProps) {
     );
   });
 
+  const tapButtonSize = size * 0.56;
+
   return (
     <div
       ref={wheelRef}
       data-testid="tap-wheel"
-      onMouseDown={handleMouseDown}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      onMouseDown={handleWheelMouseDown}
+      onTouchStart={handleWheelTouchStart}
+      onTouchMove={handleWheelTouchMove}
+      onTouchEnd={handleWheelTouchEnd}
       role="button"
-      aria-label="Tap or drag to set tempo"
+      aria-label="Drag to adjust tempo"
       tabIndex={0}
       className="relative select-none touch-none"
       style={{
@@ -157,12 +174,29 @@ export function TapWheel({ onTap, onRotate, size = 300 }: TapWheelProps) {
         <circle cx="100" cy="100" r="52" fill="none" stroke="#3a3a3e" strokeWidth="0.5" opacity="0.5" />
       </svg>
 
-      {/* Tap label */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <span className="text-[#9a9a9e] text-base font-medium tracking-[0.35em] uppercase">
+      {/* Tap button - only this area triggers tap tempo */}
+      <button
+        data-tap-button
+        onClick={handleTapClick}
+        className="absolute rounded-full flex items-center justify-center transition-transform active:scale-95"
+        style={{
+          width: tapButtonSize,
+          height: tapButtonSize,
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'radial-gradient(circle at center, #2a2a2e 0%, #1a1a1e 100%)',
+          border: '2px solid #3a3a3e',
+          boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2)',
+          cursor: 'pointer',
+          zIndex: 10,
+        }}
+        aria-label="Tap to set tempo"
+      >
+        <span className="text-[#9a9a9e] text-sm font-medium tracking-[0.3em] uppercase select-none">
           Tap
         </span>
-      </div>
+      </button>
     </div>
   );
 }
