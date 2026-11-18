@@ -15,13 +15,15 @@ export interface MetronomeControls {
   stop: () => void;
   toggle: () => void;
   countInBeat: number | null;
+  previewSound: (accent: boolean, volume: number) => void;
 }
 
 export interface UseMetronomeOptions {
   countIn?: boolean;
-  accentVolume?: number; // downbeat click gain (0..1)
-  beatVolume?: number;   // normal beat click gain (0..1)
-  subdivisionVolume?: number; // subdivision click gain (0..1)
+  accentVolume?: number;
+  beatVolume?: number;
+  subdivisionVolume?: number;
+  soundType?: 'woodblock' | 'beep' | 'click';
 }
 
 export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): MetronomeControls {
@@ -32,7 +34,6 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
   const [currentBeat, setCurrentBeat] = useState(0);
   const [countInBeat, setCountInBeat] = useState<number | null>(null);
 
-  // Keep latest options in a ref for the scheduler
   const optionsRef = useRef<UseMetronomeOptions>({});
   useEffect(() => {
     optionsRef.current = options ?? {};
@@ -56,11 +57,51 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
     setBpmState(Math.max(40, Math.min(240, Math.round(v))));
   }, []);
 
-  const playClick = useCallback((time: number, accent: boolean, volume: number) => {
-    const ctx = audioCtxRef.current;
-    if (!ctx) return;
+  // Synthesize a woodblock-like click sound
+  const playWoodblock = useCallback((ctx: AudioContext, time: number, accent: boolean, volume: number) => {
+    const freq = accent ? 1200 : 800;
+    const gainVal = accent ? Math.max(0.001, volume) : Math.max(0.001, volume * 0.6);
+
+    // Main tone (triangle wave for woody quality)
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(gainVal, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.06);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(time);
+    osc.stop(time + 0.06);
+
+    // Noise burst for attack texture
+    const bufferSize = Math.floor(ctx.sampleRate * 0.02);
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const noiseData = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      noiseData[i] = (Math.random() * 2 - 1) * 0.3;
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = noiseBuffer;
+    const noiseFilter = ctx.createBiquadFilter();
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.value = freq * 1.5;
+    noiseFilter.Q.value = 2;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(gainVal * 0.4, time);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.02);
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+    noise.start(time);
+    noise.stop(time + 0.02);
+  }, []);
+
+  // Synthesize a simple beep sound
+  const playBeep = useCallback((ctx: AudioContext, time: number, accent: boolean, volume: number) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
     osc.frequency.value = accent ? 1000 : 800;
     gain.gain.setValueAtTime(accent ? Math.max(0.001, volume) : Math.max(0.001, volume * 0.6), time);
     gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
@@ -69,6 +110,46 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
     osc.start(time);
     osc.stop(time + 0.05);
   }, []);
+
+  // Synthesize a click sound
+  const playClickSound = useCallback((ctx: AudioContext, time: number, accent: boolean, volume: number) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.value = accent ? 1500 : 1000;
+    gain.gain.setValueAtTime(accent ? Math.max(0.001, volume) : Math.max(0.001, volume * 0.5), time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.03);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(time);
+    osc.stop(time + 0.03);
+  }, []);
+
+  const playSound = useCallback((ctx: AudioContext, time: number, accent: boolean, volume: number, soundType: string) => {
+    switch (soundType) {
+      case 'woodblock':
+        playWoodblock(ctx, time, accent, volume);
+        break;
+      case 'beep':
+        playBeep(ctx, time, accent, volume);
+        break;
+      case 'click':
+        playClickSound(ctx, time, accent, volume);
+        break;
+      default:
+        playWoodblock(ctx, time, accent, volume);
+    }
+  }, [playWoodblock, playBeep, playClickSound]);
+
+  const previewSound = useCallback((accent: boolean, volume: number) => {
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new AudioContext();
+    }
+    const ctx = audioCtxRef.current;
+    if (ctx.state === 'suspended') ctx.resume();
+    const soundType = optionsRef.current.soundType || 'woodblock';
+    playSound(ctx, ctx.currentTime, accent, volume, soundType);
+  }, [playSound]);
 
   const scheduler = useCallback(() => {
     if (!isPlayingRef.current) return;
@@ -83,31 +164,33 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
     const scheduleAhead = 0.1;
     const accentVolume = opts.accentVolume ?? 0.8;
     const beatVolume = opts.beatVolume ?? 0.5;
+    const soundType = opts.soundType || 'woodblock';
 
     while (nextBeatTimeRef.current < ctx.currentTime + scheduleAhead) {
       if (countInRef.current > 0) {
         const isDownbeat = countInRef.current === beats;
-        playClick(nextBeatTimeRef.current, isDownbeat, 0.5);
+        playSound(ctx, nextBeatTimeRef.current, isDownbeat, 0.5, soundType);
         setCountInBeat(beats - countInRef.current + 1);
         countInRef.current -= 1;
-        // Count-in ticks are on beats, not subdivisions
         nextBeatTimeRef.current += (60 / bpmVal);
         continue;
       }
       const beatInMeasure = beatCountRef.current % (beats * sub);
       const isMainBeat = beatInMeasure % sub === 0;
       const isAccent = getBeatAccent(Math.floor(beatInMeasure / sub), ts) === 'accent' && isMainBeat;
-      playClick(
+      playSound(
+        ctx,
         nextBeatTimeRef.current,
         isAccent,
         isAccent ? accentVolume : (isMainBeat ? beatVolume : (opts.subdivisionVolume ?? 0.25)),
+        soundType,
       );
       setCurrentBeat(Math.floor(beatInMeasure / sub));
       nextBeatTimeRef.current += interval / 1000;
       beatCountRef.current += 1;
     }
     timerRef.current = window.setTimeout(scheduler, 25);
-  }, [playClick, subdivisionInterval]);
+  }, [playSound, subdivisionInterval]);
 
   const start = useCallback(() => {
     if (isPlaying) return;
@@ -151,6 +234,6 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
 
   return {
     bpm, setBpm, timeSignature, setTimeSignature, subdivision, setSubdivision,
-    isPlaying, currentBeat, start, stop, toggle, countInBeat,
+    isPlaying, currentBeat, start, stop, toggle, countInBeat, previewSound,
   };
 }

@@ -8,6 +8,7 @@ vi.mock('@/hooks/useMetronome', () => ({
     bpm: 100, setBpm: vi.fn(), timeSignature: '4/4', setTimeSignature: vi.fn(),
     subdivision: 1, setSubdivision: vi.fn(), isPlaying: false, currentBeat: 0,
     start: vi.fn(), stop: vi.fn(), toggle: vi.fn(), countInBeat: null,
+    previewSound: vi.fn(),
   }),
 }));
 

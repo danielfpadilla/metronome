@@ -22,6 +22,7 @@ const DEFAULT_SETTINGS: MetronomeSettings = {
   accent1: 80,
   accent2: 50,
   accent3: 50,
+  soundType: 'woodblock',
 };
 
 const STORAGE_KEY = 'metronome-settings';
@@ -46,6 +47,7 @@ export function Metronome() {
     accentVolume: settings.accent1 / 100,
     beatVolume: settings.accent2 / 100,
     subdivisionVolume: settings.accent3 / 100,
+    soundType: settings.soundType,
   });
 
   // Persist settings
@@ -175,6 +177,7 @@ export function Metronome() {
         onClose={() => setShowSettings(false)}
         settings={settings}
         onChange={(patch) => setSettings((prev) => ({ ...prev, ...patch }))}
+        previewSound={metro.previewSound}
       />
     </div>
   );

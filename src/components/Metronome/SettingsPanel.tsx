@@ -10,6 +10,7 @@ export interface MetronomeSettings {
   accent1: number;
   accent2: number;
   accent3: number;
+  soundType: 'woodblock' | 'beep' | 'click';
 }
 
 interface SettingsPanelProps {
@@ -17,6 +18,7 @@ interface SettingsPanelProps {
   onClose: () => void;
   settings: MetronomeSettings;
   onChange: (patch: Partial<MetronomeSettings>) => void;
+  previewSound: (accent: boolean, volume: number) => void;
 }
 
 const TOGGLES: { key: keyof MetronomeSettings; label: string }[] = [
@@ -27,7 +29,13 @@ const TOGGLES: { key: keyof MetronomeSettings; label: string }[] = [
   { key: 'flashNumbers', label: 'Flash numbers' },
 ];
 
-export function SettingsPanel({ isOpen, onClose, settings, onChange }: SettingsPanelProps) {
+const SOUND_TYPES = [
+  { value: 'woodblock', label: 'Woodblock' },
+  { value: 'beep', label: 'Beep' },
+  { value: 'click', label: 'Click' },
+] as const;
+
+export function SettingsPanel({ isOpen, onClose, settings, onChange, previewSound }: SettingsPanelProps) {
   useEffect(() => {
     document.documentElement.classList.toggle('dark', settings.theme === 'dark');
   }, [settings.theme]);
@@ -87,16 +95,32 @@ export function SettingsPanel({ isOpen, onClose, settings, onChange }: SettingsP
             </div>
           </div>
 
+          {/* Sound type selector */}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-[#ccc]">Sound Type</span>
+            <div className="flex gap-1">
+              {SOUND_TYPES.map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => onChange({ soundType: value })}
+                  className={`px-3 py-1 text-xs rounded ${settings.soundType === value ? 'bg-[#00e0c6] text-[#0f0f14]' : 'bg-[#0f0f14] text-[#888]'}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Accent sounds */}
           <div className="pt-2 border-t border-[#333]">
             <h3 className="text-sm font-semibold text-white mb-3">Accent Sounds</h3>
             {(
               [
-                { key: 'accent1', label: 'Accent 1' },
-                { key: 'accent2', label: 'Accent 2' },
-                { key: 'accent3', label: 'Accent 3' },
+                { key: 'accent1', label: 'Accent 1', isAccent: true },
+                { key: 'accent2', label: 'Accent 2', isAccent: false },
+                { key: 'accent3', label: 'Accent 3', isAccent: false },
               ] as const
-            ).map(({ key, label }) => (
+            ).map(({ key, label, isAccent }) => (
               <div key={key} className="flex items-center gap-3 mb-2">
                 <span className="text-xs text-[#888] w-16">{label}</span>
                 <input
@@ -109,6 +133,14 @@ export function SettingsPanel({ isOpen, onClose, settings, onChange }: SettingsP
                   aria-label={label}
                 />
                 <span className="text-xs text-[#888] w-8 text-right">{settings[key]}%</span>
+                <button
+                  onClick={() => previewSound(isAccent, settings[key] / 100)}
+                  className="w-8 h-8 rounded-full bg-[#0f0f14] border border-[#333] text-[#888] hover:text-[#00e0c6] hover:border-[#00e0c6] transition-colors flex items-center justify-center text-sm"
+                  aria-label={`Preview ${label}`}
+                  title={`Preview ${label}`}
+                >
+                  🔊
+                </button>
               </div>
             ))}
           </div>
