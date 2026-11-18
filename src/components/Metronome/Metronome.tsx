@@ -19,9 +19,9 @@ const DEFAULT_SETTINGS: MetronomeSettings = {
   flashScreen: false,
   flashNumbers: false,
   theme: 'dark',
-  accent1: 80,
-  accent2: 50,
-  accent3: 50,
+  accentLow: 30,
+  accentMid: 60,
+  accentHigh: 100,
   soundType: 'woodblock',
 };
 
@@ -44,9 +44,9 @@ export function Metronome() {
 
   const metro = useMetronome(100, {
     countIn: settings.countIn,
-    accentVolume: settings.accent1 / 100,
-    beatVolume: settings.accent2 / 100,
-    subdivisionVolume: settings.accent3 / 100,
+    accentVolume: settings.accentHigh / 100,
+    beatVolume: settings.accentMid / 100,
+    subdivisionVolume: settings.accentLow / 100,
     soundType: settings.soundType,
   });
 
