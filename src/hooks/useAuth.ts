@@ -1,48 +1,25 @@
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useState, useCallback } from 'react';
 import type { User } from '@/types';
 
+// Local-only auth: no backend required. Always authenticated as a local user.
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user] = useState<User | null>({
+    id: 'local-user',
+    email: 'local@metronome.app',
+    created_at: new Date().toISOString(),
+  });
+  const [loading] = useState(false);
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser({ id: session.user.id, email: session.user.email!, created_at: session.user.created_at });
-      }
-      setLoading(false);
-    }).catch(() => setLoading(false));
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser({ id: session.user.id, email: session.user.email!, created_at: session.user.created_at });
-      } else {
-        setUser(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const signIn = useCallback(async (email: string) => {
-    const { error } = await supabase.auth.signInWithOtp({ email });
-    if (error) throw error;
+  const signIn = useCallback(async () => {
+    // No-op: always authenticated locally
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin,
-      },
-    });
-    if (error) throw error;
+    // No-op: always authenticated locally
   }, []);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
-    setUser(null);
+    // No-op: keep local user
   }, []);
 
   return { user, loading, signIn, signInWithGoogle, signOut };

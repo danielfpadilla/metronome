@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
-import { cachePlaylists, getCachedPlaylists, isOnline } from '@/lib/sync';
-import type { Playlist } from '@/types';
+import { db } from '@/lib/db';
+import type { Playlist, PlaylistTrack, Track } from '@/types';
 
 export function usePlaylists() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -9,25 +8,11 @@ export function usePlaylists() {
 
   const fetchPlaylists = useCallback(async () => {
     setLoading(true);
-    if (isOnline()) {
-      const { data, error } = await supabase
-        .from('playlists')
-        .select('*, playlist_tracks(*, tracks(*))')
-        .order('created_at', { ascending: false });
-
-      if (!error && data) {
-        const mapped = (data as any[]).map((p) => ({
-          ...p,
-          tracks: (p.playlist_tracks || [])
-            .sort((a: any, b: any) => a.position - b.position)
-            .map((pt: any) => ({ ...pt, track: pt.tracks })),
-        }));
-        setPlaylists(mapped);
-        await cachePlaylists(mapped);
-      }
-    } else {
-      const cached = await getCachedPlaylists();
+    try {
+      const cached = await db.playlists.toArray();
       setPlaylists(cached as Playlist[]);
+    } catch {
+      setPlaylists([]);
     }
     setLoading(false);
   }, []);
@@ -35,40 +20,57 @@ export function usePlaylists() {
   useEffect(() => { fetchPlaylists(); }, [fetchPlaylists]);
 
   const createPlaylist = useCallback(async (name: string, description?: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
-    const { data, error } = await supabase
-      .from('playlists')
-      .insert({ user_id: user.id, name, description })
-      .select()
-      .single();
-    if (error) throw error;
+    const playlist: Playlist = {
+      id: crypto.randomUUID(),
+      user_id: 'local',
+      name,
+      description: description || null,
+      created_at: new Date().toISOString(),
+      tracks: [],
+    };
+    await db.playlists.add(playlist);
     await fetchPlaylists();
-    return data as Playlist;
+    return playlist;
   }, [fetchPlaylists]);
 
   const deletePlaylist = useCallback(async (id: string) => {
-    await supabase.from('playlists').delete().eq('id', id);
+    await db.playlists.delete(id);
     await fetchPlaylists();
   }, [fetchPlaylists]);
 
   const addTrackToPlaylist = useCallback(async (playlistId: string, trackId: string, position: number) => {
-    await supabase.from('playlist_tracks').insert({ playlist_id: playlistId, track_id: trackId, position });
+    const playlist = await db.playlists.get(playlistId);
+    if (!playlist) return;
+    const track = await db.tracks.get(trackId);
+    const pt: PlaylistTrack = {
+      playlist_id: playlistId,
+      track_id: trackId,
+      position,
+      track: track as Track,
+    };
+    playlist.tracks = [...(playlist.tracks || []), pt];
+    await db.playlists.put(playlist);
     await fetchPlaylists();
   }, [fetchPlaylists]);
 
   const removeTrackFromPlaylist = useCallback(async (playlistId: string, trackId: string) => {
-    await supabase.from('playlist_tracks').delete().match({ playlist_id: playlistId, track_id: trackId });
+    const playlist = await db.playlists.get(playlistId);
+    if (!playlist) return;
+    playlist.tracks = (playlist.tracks || []).filter((pt) => pt.track_id !== trackId);
+    await db.playlists.put(playlist);
     await fetchPlaylists();
   }, [fetchPlaylists]);
 
   const reorderTracks = useCallback(async (playlistId: string, trackIds: string[]) => {
-    for (let i = 0; i < trackIds.length; i++) {
-      await supabase
-        .from('playlist_tracks')
-        .update({ position: i })
-        .match({ playlist_id: playlistId, track_id: trackIds[i] });
-    }
+    const playlist = await db.playlists.get(playlistId);
+    if (!playlist) return;
+    const trackMap = new Map((playlist.tracks || []).map((pt) => [pt.track_id, pt]));
+    playlist.tracks = trackIds.map((id, i) => {
+      const pt = trackMap.get(id)!;
+      pt.position = i;
+      return pt;
+    });
+    await db.playlists.put(playlist);
     await fetchPlaylists();
   }, [fetchPlaylists]);
 

@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
-import { cacheTracks, getCachedTracks, isOnline } from '@/lib/sync';
+import { db } from '@/lib/db';
 import type { Track } from '@/types';
 
 export function useTracks() {
@@ -9,18 +8,11 @@ export function useTracks() {
 
   const fetchTracks = useCallback(async () => {
     setLoading(true);
-    if (isOnline()) {
-      const { data, error } = await supabase
-        .from('tracks')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (!error && data) {
-        setTracks(data as Track[]);
-        await cacheTracks(data as Track[]);
-      }
-    } else {
-      const cached = await getCachedTracks();
+    try {
+      const cached = await db.tracks.toArray();
       setTracks(cached as Track[]);
+    } catch {
+      setTracks([]);
     }
     setLoading(false);
   }, []);
@@ -28,47 +20,45 @@ export function useTracks() {
   useEffect(() => { fetchTracks(); }, [fetchTracks]);
 
   const addYouTubeTrack = useCallback(async (url: string, title: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
-
-    const { data: track, error } = await supabase
-      .from('tracks')
-      .insert({ user_id: user.id, title, youtube_url: url, source: 'youtube', status: 'processing' })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    const { error: fnError } = await supabase.functions.invoke('extract-bpm', {
-      body: { youtube_url: url, track_id: track.id },
-    });
-
-    if (fnError) {
-      await supabase.from('tracks').update({ status: 'failed' }).eq('id', track.id);
-      throw new Error(fnError.message || 'BPM extraction failed');
-    }
-
+    const track: Track = {
+      id: crypto.randomUUID(),
+      user_id: 'local',
+      title: title || 'Untitled Track',
+      youtube_url: url,
+      bpm: null,
+      duration_seconds: null,
+      storage_path: null,
+      cover_art_url: null,
+      source: 'youtube',
+      created_at: new Date().toISOString(),
+      status: 'manual_bpm_pending',
+    };
+    await db.tracks.add(track);
     await fetchTracks();
-    return track as Track;
+    return track;
   }, [fetchTracks]);
 
   const addManualTrack = useCallback(async (title: string, bpm: number) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
-
-    const { data: track, error } = await supabase
-      .from('tracks')
-      .insert({ user_id: user.id, title, bpm, source: 'manual', status: 'ready' })
-      .select()
-      .single();
-
-    if (error) throw error;
+    const track: Track = {
+      id: crypto.randomUUID(),
+      user_id: 'local',
+      title: title || 'Untitled Track',
+      youtube_url: null,
+      bpm,
+      duration_seconds: null,
+      storage_path: null,
+      cover_art_url: null,
+      source: 'manual',
+      created_at: new Date().toISOString(),
+      status: 'ready',
+    };
+    await db.tracks.add(track);
     await fetchTracks();
-    return track as Track;
+    return track;
   }, [fetchTracks]);
 
   const deleteTrack = useCallback(async (id: string) => {
-    await supabase.from('tracks').delete().eq('id', id);
+    await db.tracks.delete(id);
     await fetchTracks();
   }, [fetchTracks]);
 

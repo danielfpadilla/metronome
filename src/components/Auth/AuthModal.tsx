@@ -32,7 +32,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     setLoading(true);
     setError(null);
     try {
-      await signIn(email);
+      await signIn();
       setSent(true);
       onSuccess?.();
     } catch (err) {
