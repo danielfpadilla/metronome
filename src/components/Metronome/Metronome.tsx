@@ -6,6 +6,7 @@ import { BpmDisplay } from './BpmDisplay';
 import { SubdivisionButtons } from './SubdivisionButtons';
 import { PlayBar } from './PlayBar';
 import { BottomToolbar } from './BottomToolbar';
+import { BeatAccentBar } from './BeatAccentBar';
 import { SettingsPanel, type MetronomeSettings } from './SettingsPanel';
 import { tapTempoToBpm } from '@/lib/bpmMath';
 import type { TimeSignature } from '@/types';
@@ -174,6 +175,21 @@ export function Metronome() {
           <SubdivisionButtons value={metro.subdivision} onChange={metro.setSubdivision} />
         </div>
         <BottomToolbar timeDisplay={displayTime} isPlaying={metro.isPlaying} onToggle={metro.toggle} />
+        {/* Beat accent bar */}
+        <div className="mt-3 pt-3 border-t border-[#222]">
+          <p className="text-xs text-[#888] mb-2 text-center">Beat Accents (click to cycle: Off → Low → Mid → High)</p>
+          <BeatAccentBar
+            timeSignature={metro.timeSignature}
+            accentPattern={settings.accentPattern}
+            onChange={(pattern) => setSettings((prev) => ({ ...prev, accentPattern: pattern }))}
+            previewSound={metro.previewSound}
+            volumes={{
+              low: settings.accentLow / 100,
+              mid: settings.accentMid / 100,
+              high: settings.accentHigh / 100,
+            }}
+          />
+        </div>
       </div>
 
       <SettingsPanel
@@ -182,7 +198,6 @@ export function Metronome() {
         settings={settings}
         onChange={(patch) => setSettings((prev) => ({ ...prev, ...patch }))}
         previewSound={metro.previewSound}
-        timeSignature={metro.timeSignature}
       />
     </div>
   );
