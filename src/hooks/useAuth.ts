@@ -1,26 +1,53 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { auth, googleProvider } from '@/lib/firebase';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+} from 'firebase/auth';
 import type { User } from '@/types';
 
-// Local-only auth: no backend required. Always authenticated as a local user.
 export function useAuth() {
-  const [user] = useState<User | null>({
-    id: 'local-user',
-    email: 'local@metronome.app',
-    created_at: new Date().toISOString(),
-  });
-  const [loading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const signIn = useCallback(async () => {
-    // No-op: always authenticated locally
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        setUser({
+          id: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          created_at: firebaseUser.metadata.creationTime || new Date().toISOString(),
+        });
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const signIn = useCallback(async (email: string, password: string) => {
+    const { user: firebaseUser } = await signInWithEmailAndPassword(auth, email, password);
+    return firebaseUser;
+  }, []);
+
+  const signUp = useCallback(async (email: string, password: string) => {
+    const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, email, password);
+    return firebaseUser;
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
-    // No-op: always authenticated locally
+    const { user: firebaseUser } = await signInWithPopup(auth, googleProvider);
+    return firebaseUser;
   }, []);
 
   const signOut = useCallback(async () => {
-    // No-op: keep local user
+    await firebaseSignOut(auth);
+    setUser(null);
   }, []);
 
-  return { user, loading, signIn, signInWithGoogle, signOut };
+  return { user, loading, signIn, signUp, signInWithGoogle, signOut };
 }

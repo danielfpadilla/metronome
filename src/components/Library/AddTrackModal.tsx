@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { isValidYouTubeUrl } from '@/utils/youtube';
+import { useAuthContext } from '@/components/Auth/AuthProvider';
+import { AuthModal } from '@/components/Auth/AuthModal';
 
 interface AddTrackModalProps {
   isOpen: boolean;
@@ -9,16 +11,19 @@ interface AddTrackModalProps {
 }
 
 export function AddTrackModal({ isOpen, onClose, onAddYouTube, onAddManual }: AddTrackModalProps) {
+  const { user } = useAuthContext();
   const [mode, setMode] = useState<'youtube' | 'manual'>('youtube');
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
   const [bpm, setBpm] = useState(120);
+  const [showAuth, setShowAuth] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const handleYouTube = async () => {
+    if (!user) { setShowAuth(true); return; }
     if (!isValidYouTubeUrl(url)) { setError('Invalid YouTube URL'); return; }
     setLoading(true);
     setError(null);
@@ -33,6 +38,7 @@ export function AddTrackModal({ isOpen, onClose, onAddYouTube, onAddManual }: Ad
   };
 
   const handleManual = async () => {
+    if (!user) { setShowAuth(true); return; }
     setLoading(true);
     setError(null);
     try {
@@ -131,6 +137,7 @@ export function AddTrackModal({ isOpen, onClose, onAddYouTube, onAddManual }: Ad
           )}
         </div>
       </div>
+      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
     </>
   );
 }

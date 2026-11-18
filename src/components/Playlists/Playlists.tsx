@@ -3,17 +3,22 @@ import { usePlaylists } from '@/hooks/usePlaylists';
 import { useTracks } from '@/hooks/useTracks';
 import { PlaylistCard } from './PlaylistCard';
 import { PlaylistEditor } from './PlaylistEditor';
+import { useAuthContext } from '@/components/Auth/AuthProvider';
+import { AuthModal } from '@/components/Auth/AuthModal';
 import { useNavigate } from 'react-router-dom';
 
 export function Playlists() {
   const { playlists, loading, createPlaylist, deletePlaylist, addTrackToPlaylist, removeTrackFromPlaylist, reorderTracks } = usePlaylists();
   const { tracks } = useTracks();
+  const { user } = useAuthContext();
   const navigate = useNavigate();
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
+  const [showAuth, setShowAuth] = useState(false);
   const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null);
 
   const handleCreate = async () => {
+    if (!user) { setShowAuth(true); return; }
     if (!newName.trim()) return;
     await createPlaylist(newName.trim());
     setNewName('');
@@ -53,6 +58,7 @@ export function Playlists() {
   }
 
   return (
+    <>
     <div className="p-4">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-white">Playlists</h1>
@@ -106,5 +112,8 @@ export function Playlists() {
         </div>
       )}
       </div>
+
+      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
+    </>
   );
 }
