@@ -30,3 +30,7 @@ supabase/.env
 # Build artifacts
 dist-node/
 tsconfig.tsbuildinfo
+
+# Firebase agent skills (installed via npx skills add)
+.agents/
+skills-lock.json

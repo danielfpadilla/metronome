@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { db as firestoreDb } from '@/lib/firebase';
-import { db as localDb } from '@/lib/db';
 import {
   collection,
   doc,
@@ -21,13 +20,7 @@ export function useTracks() {
 
   const fetchTracks = useCallback(async () => {
     if (!user) {
-      // Offline fallback: read from IndexedDB
-      try {
-        const cached = await localDb.tracks.toArray();
-        setTracks(cached as Track[]);
-      } catch {
-        setTracks([]);
-      }
+      setTracks([]);
       setLoading(false);
       return;
     }
@@ -39,14 +32,9 @@ export function useTracks() {
       const snapshot = await getDocs(q);
       const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Track));
       setTracks(data);
-      // Cache locally for offline
-      await localDb.tracks.clear();
-      await localDb.tracks.bulkPut(data);
     } catch (err) {
-      // Offline fallback
-      console.warn('Firestore fetch failed, using local cache:', err);
-      const cached = await localDb.tracks.toArray();
-      setTracks(cached as Track[]);
+      console.warn('Firestore fetch failed:', err);
+      setTracks([]);
     }
     setLoading(false);
   }, [user]);
@@ -60,8 +48,6 @@ export function useTracks() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Track));
       setTracks(data);
-      // Update local cache
-      localDb.tracks.clear().then(() => localDb.tracks.bulkPut(data)).catch(() => {});
     }, (err) => {
       console.warn('Firestore listener error:', err);
     });
@@ -88,15 +74,9 @@ export function useTracks() {
       status: 'manual_bpm_pending',
     };
 
-    try {
-      await setDoc(doc(firestoreDb, 'users', user.id, 'tracks', track.id), track);
-    } catch {
-      // Offline: save locally
-      await localDb.tracks.add(track);
-    }
-    await fetchTracks();
+    await setDoc(doc(firestoreDb, 'users', user.id, 'tracks', track.id), track);
     return track;
-  }, [user, fetchTracks]);
+  }, [user]);
 
   const addManualTrack = useCallback(async (title: string, bpm: number) => {
     if (!user) throw new Error('Not authenticated');
@@ -115,24 +95,14 @@ export function useTracks() {
       status: 'ready',
     };
 
-    try {
-      await setDoc(doc(firestoreDb, 'users', user.id, 'tracks', track.id), track);
-    } catch {
-      await localDb.tracks.add(track);
-    }
-    await fetchTracks();
+    await setDoc(doc(firestoreDb, 'users', user.id, 'tracks', track.id), track);
     return track;
-  }, [user, fetchTracks]);
+  }, [user]);
 
   const deleteTrack = useCallback(async (id: string) => {
     if (!user) return;
-    try {
-      await deleteDoc(doc(firestoreDb, 'users', user.id, 'tracks', id));
-    } catch {
-      await localDb.tracks.delete(id);
-    }
-    await fetchTracks();
-  }, [user, fetchTracks]);
+    await deleteDoc(doc(firestoreDb, 'users', user.id, 'tracks', id));
+  }, [user]);
 
   return { tracks, loading, fetchTracks, addYouTubeTrack, addManualTrack, deleteTrack };
 }

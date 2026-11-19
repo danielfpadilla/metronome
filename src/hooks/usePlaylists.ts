@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { db as firestoreDb } from '@/lib/firebase';
-import { db as localDb } from '@/lib/db';
 import {
   collection,
   doc,
   getDocs,
+  getDoc,
   setDoc,
   deleteDoc,
   onSnapshot,
@@ -21,12 +21,7 @@ export function usePlaylists() {
 
   const fetchPlaylists = useCallback(async () => {
     if (!user) {
-      try {
-        const cached = await localDb.playlists.toArray();
-        setPlaylists(cached as Playlist[]);
-      } catch {
-        setPlaylists([]);
-      }
+      setPlaylists([]);
       setLoading(false);
       return;
     }
@@ -38,12 +33,9 @@ export function usePlaylists() {
       const snapshot = await getDocs(q);
       const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Playlist));
       setPlaylists(data);
-      await localDb.playlists.clear();
-      await localDb.playlists.bulkPut(data);
     } catch (err) {
-      console.warn('Firestore fetch failed, using local cache:', err);
-      const cached = await localDb.playlists.toArray();
-      setPlaylists(cached as Playlist[]);
+      console.warn('Firestore fetch failed:', err);
+      setPlaylists([]);
     }
     setLoading(false);
   }, [user]);
@@ -57,7 +49,6 @@ export function usePlaylists() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Playlist));
       setPlaylists(data);
-      localDb.playlists.clear().then(() => localDb.playlists.bulkPut(data)).catch(() => {});
     }, (err) => {
       console.warn('Firestore listener error:', err);
     });
@@ -79,31 +70,33 @@ export function usePlaylists() {
       tracks: [],
     };
 
-    try {
-      await setDoc(doc(firestoreDb, 'users', user.id, 'playlists', playlist.id), playlist);
-    } catch {
-      await localDb.playlists.add(playlist);
-    }
-    await fetchPlaylists();
+    await setDoc(doc(firestoreDb, 'users', user.id, 'playlists', playlist.id), playlist);
     return playlist;
-  }, [user, fetchPlaylists]);
+  }, [user]);
 
   const deletePlaylist = useCallback(async (id: string) => {
     if (!user) return;
-    try {
-      await deleteDoc(doc(firestoreDb, 'users', user.id, 'playlists', id));
-    } catch {
-      await localDb.playlists.delete(id);
-    }
-    await fetchPlaylists();
-  }, [user, fetchPlaylists]);
+    await deleteDoc(doc(firestoreDb, 'users', user.id, 'playlists', id));
+  }, [user]);
 
   const addTrackToPlaylist = useCallback(async (playlistId: string, trackId: string, position: number) => {
     if (!user) return;
+    // Need to fetch the track from Firestore
+    // For now, just update the playlist
     const playlist = playlists.find((p) => p.id === playlistId);
     if (!playlist) return;
 
-    const track = await localDb.tracks.get(trackId);
+    // Fetch track from Firestore
+    let track: Track | null = null;
+    try {
+      const trackDoc = await getDoc(doc(firestoreDb, 'users', user.id, 'tracks', trackId));
+      if (trackDoc.exists()) {
+        track = { id: trackDoc.id, ...trackDoc.data() } as Track;
+      }
+    } catch (err) {
+      console.warn('Failed to fetch track:', err);
+    }
+
     const pt: PlaylistTrack = {
       playlist_id: playlistId,
       track_id: trackId,
@@ -116,13 +109,8 @@ export function usePlaylists() {
       tracks: [...(playlist.tracks || []), pt],
     };
 
-    try {
-      await setDoc(doc(firestoreDb, 'users', user.id, 'playlists', playlistId), updatedPlaylist);
-    } catch {
-      await localDb.playlists.put(updatedPlaylist);
-    }
-    await fetchPlaylists();
-  }, [user, playlists, fetchPlaylists]);
+    await setDoc(doc(firestoreDb, 'users', user.id, 'playlists', playlistId), updatedPlaylist);
+  }, [user, playlists]);
 
   const removeTrackFromPlaylist = useCallback(async (playlistId: string, trackId: string) => {
     if (!user) return;
@@ -134,13 +122,8 @@ export function usePlaylists() {
       tracks: (playlist.tracks || []).filter((pt) => pt.track_id !== trackId),
     };
 
-    try {
-      await setDoc(doc(firestoreDb, 'users', user.id, 'playlists', playlistId), updatedPlaylist);
-    } catch {
-      await localDb.playlists.put(updatedPlaylist);
-    }
-    await fetchPlaylists();
-  }, [user, playlists, fetchPlaylists]);
+    await setDoc(doc(firestoreDb, 'users', user.id, 'playlists', playlistId), updatedPlaylist);
+  }, [user, playlists]);
 
   const reorderTracks = useCallback(async (playlistId: string, trackIds: string[]) => {
     if (!user) return;
@@ -156,13 +139,8 @@ export function usePlaylists() {
       }),
     };
 
-    try {
-      await setDoc(doc(firestoreDb, 'users', user.id, 'playlists', playlistId), updatedPlaylist);
-    } catch {
-      await localDb.playlists.put(updatedPlaylist);
-    }
-    await fetchPlaylists();
-  }, [user, playlists, fetchPlaylists]);
+    await setDoc(doc(firestoreDb, 'users', user.id, 'playlists', playlistId), updatedPlaylist);
+  }, [user, playlists]);
 
   return {
     playlists, loading, fetchPlaylists, createPlaylist, deletePlaylist,

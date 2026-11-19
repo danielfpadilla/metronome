@@ -25,8 +25,20 @@ export function useAuth() {
         setUser(null);
       }
       setLoading(false);
+    }, (error) => {
+      console.error('[useAuth] onAuthStateChanged error:', error);
+      setLoading(false);
     });
-    return () => unsubscribe();
+
+    // Fallback: if onAuthStateChanged doesn't fire within 5s, stop loading
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 5000);
+
+    return () => {
+      clearTimeout(timeout);
+      unsubscribe();
+    };
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
