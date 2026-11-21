@@ -72,4 +72,11 @@ after each logical group.
 
 ---
 
-Next step: write the implementation plan via the writing-plans skill.
+## Status (2026-11-21)
+- Dead code removed; Dexie dependency removed.
+- Stale auth plan removed; original design marked superseded.
+- Lint warnings cleared; all tests pass.
+- Tap-tempo history implemented and persisted.
+- Screenshots refreshed for current desktop/mobile UI.
+- Docs updated to match shipped features.
+- Additional shipped work: FAB speed dial, desktop Settings nav, per-track settings, playlist memory, mobile spacing fixes.

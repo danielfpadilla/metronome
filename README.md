@@ -2,7 +2,15 @@
 
 A precision metronome web app for musicians — set tempo, practice with subdivisions, build track playlists, and detect BPM from YouTube videos. Pure frontend, works offline, no backend required.
 
-![Metronome Screenshot](https://via.placeholder.com/800x400?text=Metronome+App)
+### Screenshots
+
+| Desktop | Mobile |
+|---------|--------|
+| ![Metronome Desktop](screenshots/metronome-desktop.jpg) | ![Metronome Mobile](screenshots/metronome-mobile.jpg) |
+
+| Library | Playlists |
+|---------|-----------|
+| ![Library Mobile](screenshots/library-mobile.jpg) | ![Playlists Mobile](screenshots/playlists-mobile.jpg) |
 
 ## ✨ Features
 
@@ -14,10 +22,11 @@ A precision metronome web app for musicians — set tempo, practice with subdivi
 - **Sound types** — Woodblock, Beep, Click (with volume preview)
 - **Visual modes** — Pendulum, flash screen, flash numbers, count-in
 - **Themes** — Dark and light mode
+- **Tap-tempo history** — Recent tap BPM estimates, shown in BPM display and Settings (clearable)
 
 ### Track Library
 - **Add tracks** — YouTube URL or manual BPM entry
-- **Edit tracks** — Change title and BPM
+- **Edit tracks** — Change title, BPM, time signature, subdivision and beat accents
 - **YouTube player** — Embedded player with tap-to-detect BPM
 - **Status badges** — Processing, Ready, Failed, BPM needed
 - **Search & filter** — By title, source (YouTube/Manual), BPM range
@@ -25,12 +34,13 @@ A precision metronome web app for musicians — set tempo, practice with subdivi
 ### Playlists
 - **Create playlists** — Organize tracks into practice sets
 - **Reorder tracks** — Move up/down within a playlist
-- **Playlist player** — Select a playlist on the metronome page, navigate tracks, auto-sync BPM
+- **Playlist player** — Select a playlist on the metronome page, navigate tracks, remembers the last loaded playlist and auto-syncs BPM/per-track settings
 - **Rename playlists** — Double-click or use Rename button
 
 ### Design
 - **Studio Instrument aesthetic** — Deep charcoal, warm ink, teal accent
 - **Responsive** — Works on desktop and mobile (390px+)
+- **Navigation** — Desktop sidebar Settings nav; mobile FAB speed dial (Metronome/Library/Playlists/Settings)
 - **Accessible** — Focus-visible, touch targets ≥44px, reduced motion support
 - **Offline-first** — All data stored in localStorage, works without internet
 
@@ -44,7 +54,7 @@ A precision metronome web app for musicians — set tempo, practice with subdivi
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/metronome.git
+git clone https://github.com/danielfpadilla/metronome.git
 cd metronome
 
 # Install dependencies
@@ -54,7 +64,7 @@ npm install
 npm run dev
 ```
 
-The app will be available at `http://localhost:3000/`.
+The dev server runs at `http://localhost:5173/` by default. `npm run preview` serves the production build at `http://localhost:4173/` (or `http://localhost:3000/` when started with `--port 3000`).
 
 ### Build for Production
 
@@ -66,6 +76,7 @@ npm run preview
 ### Run Tests
 
 ```bash
+npm run lint
 npx vitest run
 ```
 
@@ -75,18 +86,20 @@ npx vitest run
 metronome/
 ├── src/
 │   ├── components/
-│   │   ├── Layout/          # AppShell, BottomNav
+│   │   ├── Layout/          # AppShell, BurgerMenu
 │   │   ├── Library/         # TrackCard, AddTrackModal, EditTrackModal
 │   │   ├── Metronome/       # Metronome, TapWheel, BpmDisplay, etc.
 │   │   ├── Playlists/       # PlaylistCard, PlaylistEditor
 │   │   └── YouTubePlayer.tsx
 │   ├── hooks/               # useMetronome, useTracks, usePlaylists, useSettings
-│   ├── lib/                 # bpmMath, musicalTerms, db
+│   ├── lib/                 # bpmMath, musicalTerms
 │   ├── types/               # TypeScript interfaces
-│   └── utils/               # YouTube URL parsing
+│   └── utils/               # youtube
 ├── tests/
 │   ├── unit/                # Unit tests
 │   └── components/          # Component tests
+├── screenshots/             # UI screenshots for docs
+├── docs/                    # Specs and implementation plans
 ├── public/                  # Static assets, PWA manifest, service worker
 └── package.json
 ```
@@ -104,8 +117,8 @@ metronome/
 
 - Responsive layout (390px+)
 - Touch-optimized controls (44px minimum targets)
-- Bottom navigation bar
-- Responsive tap wheel (220px on mobile)
+- FAB speed dial for navigation (Metronome/Library/Playlists/Settings)
+- Responsive tap wheel (180px on mobile <480px)
 - Safe area padding for notched devices
 
 ## 🎯 Usage
@@ -138,8 +151,11 @@ Click each beat number (1-4) to cycle through: **Off → Low → Mid → High**
 3. Click on the playlist to add tracks
 4. Select tracks from the dropdown and click "Add"
 5. Reorder with ▲/▼ buttons
-6. Go to **Metronome** → select your playlist from the dropdown
+6. Go to **Metronome** → select your playlist from the selector (or play from the Playlists page); the selection is remembered across reloads
 7. Use ◀/▶/▶▶ to navigate between tracks
+
+### Settings
+Open **Settings** from the desktop sidebar or the mobile FAB speed dial. Recent tap-tempo estimates appear under **Tap History** (also shown below the BPM display) and can be cleared there.
 
 ## 🧪 Testing
 
