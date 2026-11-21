@@ -25,7 +25,6 @@ export interface PlaylistTrack {
   playlist_id: string;
   track_id: string;
   position: number;
-  track?: Track;
 }
 
 export interface User {

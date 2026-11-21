@@ -24,7 +24,8 @@ export function Playlists() {
 
   if (selected) {
     const firstTrack = selected.tracks?.[0];
-    const firstBpm = firstTrack?.track?.bpm ?? 100;
+    const firstTrackData = firstTrack ? tracks.find((t) => t.id === firstTrack.track_id) : undefined;
+    const firstBpm = firstTrackData?.bpm ?? 100;
 
     const handlePlay = () => {
       navigate(`/?bpm=${firstBpm}&playlist=${selected.id}`);
@@ -34,7 +35,7 @@ export function Playlists() {
       <div>
         <button
           onClick={() => setSelectedPlaylist(null)}
-          className="px-4 py-2 text-[#888] hover:text-white text-sm"
+          className="px-4 py-2 text-[var(--ink-2)] hover:text-[var(--ink)] text-sm transition-colors"
         >
           ← Back to Playlists
         </button>
@@ -45,7 +46,7 @@ export function Playlists() {
           onRemoveTrack={(trackId) => removeTrackFromPlaylist(selected.id, trackId)}
           onReorder={(trackIds) => reorderTracks(selected.id, trackIds)}
           onPlay={handlePlay}
-          firstTrackTitle={firstTrack?.track?.title}
+          firstTrackTitle={firstTrackData?.title}
           firstTrackBpm={firstBpm}
         />
       </div>

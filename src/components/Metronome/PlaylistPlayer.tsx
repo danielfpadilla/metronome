@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { usePlaylists } from '@/hooks/usePlaylists';
+import { useTracks } from '@/hooks/useTracks';
+import type { Track } from '@/types';
 
 interface PlaylistPlayerProps {
   initialPlaylistId?: string | null;
@@ -10,6 +12,7 @@ interface PlaylistPlayerProps {
 
 export function PlaylistPlayer({ initialPlaylistId, onBpmChange, isPlaying, onTogglePlay }: PlaylistPlayerProps) {
   const { playlists } = usePlaylists();
+  const { tracks } = useTracks();
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(initialPlaylistId || null);
 
   // Sync with initialPlaylistId prop
@@ -24,7 +27,13 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, isPlaying, onTo
 
   const selectedPlaylist = playlists.find((p) => p.id === selectedPlaylistId) || null;
   const playlistTracks = selectedPlaylist?.tracks || [];
-  const currentTrack = playlistTracks[currentIndex]?.track;
+  
+  // Look up track from tracks list (always fresh data)
+  const getTrack = useCallback((trackId: string): Track | undefined => {
+    return tracks.find((t) => t.id === trackId);
+  }, [tracks]);
+
+  const currentTrack = getTrack(playlistTracks[currentIndex]?.track_id ?? '');
 
   // Sync BPM when track changes
   useEffect(() => {
@@ -144,7 +153,7 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, isPlaying, onTo
         <div className="px-4 pb-3 max-h-48 overflow-y-auto">
           <div className="space-y-1">
             {playlistTracks.map((pt, index) => {
-              const track = pt.track;
+              const track = getTrack(pt.track_id);
               const isCurrent = index === currentIndex;
               return (
                 <button

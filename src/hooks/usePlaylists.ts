@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Playlist, PlaylistTrack, Track } from '@/types';
+import type { Playlist, PlaylistTrack } from '@/types';
 
 const STORAGE_KEY = 'metronome-playlists';
 
@@ -46,16 +46,6 @@ export function usePlaylists() {
   }, []);
 
   const addTrackToPlaylist = useCallback(async (playlistId: string, trackId: string, position: number) => {
-    // Find the track from all tracks in localStorage
-    let track: Track | undefined;
-    try {
-      const tracksSaved = localStorage.getItem('metronome-tracks');
-      const tracks: Track[] = tracksSaved ? JSON.parse(tracksSaved) : [];
-      track = tracks.find((t) => t.id === trackId);
-    } catch {
-      /* ignore */
-    }
-
     setPlaylists((prev) =>
       prev.map((p) => {
         if (p.id !== playlistId) return p;
@@ -63,7 +53,6 @@ export function usePlaylists() {
           playlist_id: playlistId,
           track_id: trackId,
           position,
-          track: track,
         };
         return { ...p, tracks: [...(p.tracks || []), pt] };
       })

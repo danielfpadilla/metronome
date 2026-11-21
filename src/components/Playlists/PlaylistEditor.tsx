@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTracks } from '@/hooks/useTracks';
 import type { Playlist, Track } from '@/types';
 
 interface PlaylistEditorProps {
@@ -13,7 +14,9 @@ interface PlaylistEditorProps {
 }
 
 export function PlaylistEditor({ playlist, availableTracks, onAddTrack, onRemoveTrack, onReorder, onPlay, firstTrackTitle, firstTrackBpm }: PlaylistEditorProps) {
+  const { tracks: allTracks } = useTracks();
   const [selectedTrack, setSelectedTrack] = useState('');
+  const getTrack = (trackId: string) => allTracks.find((t) => t.id === trackId);
 
   const tracks = playlist.tracks || [];
   const trackIds = tracks.map((pt) => pt.track_id);
@@ -95,8 +98,8 @@ export function PlaylistEditor({ playlist, availableTracks, onAddTrack, onRemove
             >
               <span className="text-[var(--ink-3)] text-xs w-6">{index + 1}</span>
               <div className="flex-1 min-w-0">
-                <p className="text-[var(--ink)] text-sm truncate">{pt.track?.title ?? 'Unknown'}</p>
-                <p className="text-xs text-[var(--ink-3)]">{pt.track?.bpm ?? '—'} BPM</p>
+                <p className="text-[var(--ink)] text-sm truncate">{getTrack(pt.track_id)?.title ?? 'Unknown'}</p>
+                <p className="text-xs text-[var(--ink-3)]">{getTrack(pt.track_id)?.bpm ?? '—'} BPM</p>
               </div>
               <div className="flex gap-1">
                 <button
