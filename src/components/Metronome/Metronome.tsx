@@ -37,6 +37,12 @@ export function Metronome() {
     accentPattern: settings.accentPattern,
   });
 
+  // Keep latest BPM in a ref for the tap wheel rotation handler
+  const bpmRef = useRef(metro.bpm);
+  useEffect(() => {
+    bpmRef.current = metro.bpm;
+  }, [metro.bpm]);
+
   // Responsive tap wheel size
   const [wheelSize, setWheelSize] = useState(280);
   useEffect(() => {
@@ -137,7 +143,7 @@ export function Metronome() {
             <div className="pendulum-weight" />
           </div>
         ) : (
-          <TapWheel onTap={handleTap} onRotate={(delta) => metro.setBpm(metro.bpm + delta)} size={wheelSize} />
+          <TapWheel onTap={handleTap} onRotate={(delta) => { const newBpm = Math.max(40, Math.min(240, bpmRef.current + delta)); bpmRef.current = newBpm; metro.setBpm(newBpm); }} size={wheelSize} />
         )}
         {/* Visual beat indicator */}
         <div className="flex gap-2">

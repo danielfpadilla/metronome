@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState } from 'react';
+import { useRef, useCallback, useState, useEffect } from 'react';
 
 interface TapWheelProps {
   onTap: () => void;
@@ -15,6 +15,12 @@ export function TapWheel({ onTap, onRotate, size = 300 }: TapWheelProps) {
   const lastAngle = useRef<number | null>(null);
   const [rotation, setRotation] = useState(0);
   const [pressed, setPressed] = useState(false);
+
+  // Keep latest onRotate in a ref so drag handlers always call the current version
+  const onRotateRef = useRef(onRotate);
+  useEffect(() => {
+    onRotateRef.current = onRotate;
+  }, [onRotate]);
 
   const getAngle = useCallback((clientX: number, clientY: number) => {
     const rect = wheelRef.current?.getBoundingClientRect();
@@ -37,13 +43,18 @@ export function TapWheel({ onTap, onRotate, size = 300 }: TapWheelProps) {
     const rawDelta = angle - lastAngle.current;
     const delta = rawDelta > 180 ? rawDelta - 360 : rawDelta < -180 ? rawDelta + 360 : rawDelta;
 
-    if (Math.abs(delta) > 2) {
+    if (Math.abs(delta) > 1.5) {
       hasMoved.current = true;
-      setRotation((r) => r + (delta > 0 ? 4 : -4));
-      onRotate?.(delta > 0 ? 1 : -1);
+      // BPM change proportional to drag: ~1 BPM per 3 degrees
+      const bpmDelta = Math.round(delta / 3);
+      if (bpmDelta !== 0) {
+        onRotateRef.current?.(bpmDelta);
+      }
+      // Visual rotation matches drag (1:1 for natural feel)
+      setRotation((r) => r + delta);
       lastAngle.current = angle;
     }
-  }, [getAngle, onRotate]);
+  }, [getAngle]);
 
   const endDrag = useCallback(() => {
     isDragging.current = false;
