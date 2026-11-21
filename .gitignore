@@ -34,3 +34,6 @@ tsconfig.tsbuildinfo
 # Firebase agent skills (installed via npx skills add)
 .agents/
 skills-lock.json
+
+# Local brainstorming scratch
+.opencode/
