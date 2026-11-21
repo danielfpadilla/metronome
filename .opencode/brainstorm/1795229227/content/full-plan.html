@@ -1,0 +1,38 @@
+<h2>Metronome Improvement Round — Full Plan</h2>
+<p class="subtitle">Direction: Cleanup + Quick Wins (Option A)</p>
+
+<div class="section">
+  <h3>1. Objective</h3>
+  <p>Prepare the codebase for continued improvement: remove dead weight and add one high-value user-facing improvement.</p>
+</div>
+
+<div class="section">
+  <h3>2. In Scope</h3>
+  <ul>
+    <li>Delete dead components: <code>BottomToolbar.tsx</code></li>
+    <li>Delete dead libs: <code>src/lib/db.ts</code>, <code>src/lib/sync.ts</code></li>
+    <li>Remove unused <code>dexie</code> dependency</li>
+    <li>Remove stale Supabase/Google-auth-era docs</li>
+    <li>Fix safe lint warnings (setState-in-effect, memoization)</li>
+    <li>Add tap-tempo history (persisted, shown in BPM display)</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h3>3. Out of Scope</h3>
+  <ul>
+    <li>Backend / Auth (already removed intentionally)</li>
+    <li>Major visual redesign</li>
+    <li>New subsystems</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h3>4. User-Facing Improvement: Tap-Tempo History</h3>
+  <p>Keep last N tap estimates in localStorage; surface in BPM display; allow reset.</p>
+</div>
+
+<div class="section">
+  <h3>5. Verification</h3>
+  <p>npm run build, npx vitest run, npm run lint, browser console check.</p>
+</div>

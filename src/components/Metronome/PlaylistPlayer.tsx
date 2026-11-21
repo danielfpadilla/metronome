@@ -6,11 +6,12 @@ import type { Track } from '@/types';
 interface PlaylistPlayerProps {
   initialPlaylistId?: string | null;
   onBpmChange: (bpm: number) => void;
+  onSettingsChange?: (track: Track) => void;
   isPlaying: boolean;
   onTogglePlay: () => void;
 }
 
-export function PlaylistPlayer({ initialPlaylistId, onBpmChange, isPlaying, onTogglePlay }: PlaylistPlayerProps) {
+export function PlaylistPlayer({ initialPlaylistId, onBpmChange, onSettingsChange, isPlaying, onTogglePlay }: PlaylistPlayerProps) {
   const { playlists } = usePlaylists();
   const { tracks } = useTracks();
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(initialPlaylistId || null);
@@ -35,12 +36,12 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, isPlaying, onTo
 
   const currentTrack = getTrack(playlistTracks[currentIndex]?.track_id ?? '');
 
-  // Sync BPM when track changes
+  // Sync BPM and per-track settings when track changes
   useEffect(() => {
-    if (currentTrack?.bpm) {
-      onBpmChange(currentTrack.bpm);
-    }
-  }, [currentIndex, currentTrack, onBpmChange]);
+    if (!currentTrack) return;
+    if (currentTrack.bpm) onBpmChange(currentTrack.bpm);
+    onSettingsChange?.(currentTrack);
+  }, [currentIndex, currentTrack, onBpmChange, onSettingsChange]);
 
   const goToTrack = useCallback((index: number) => {
     if (index < 0 || index >= playlistTracks.length) return;

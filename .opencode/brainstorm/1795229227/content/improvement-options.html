@@ -1,0 +1,37 @@
+<h2>Next improvement round — design options</h2>
+<p class="subtitle">How should we improve the metronome app next?</p>
+
+<div class="section">
+  <h3>Option A — Cleanup + Quick Wins (recommended)</h3>
+  <p>Remove dead code (BottomToolbar, Dexie db, sync helpers), stale Supabase-era docs, unused dependency.</p>
+  <p class="subtitle">Then add user-facing quick win: tap-tempo history in BPM display.</p>
+</div>
+
+<div class="section">
+  <h3>Option B — Feature-First Round</h3>
+  <p>Prioritize new user-facing features (practice stats, custom sounds, setlists) before deep cleanup.</p>
+</div>
+
+<div class="section">
+  <h3>Option C — Polish-Only Round</h3>
+  <p>Skip cleanup; focus purely on UX/sound/visual refinements of the metronome experience.</p>
+</div>
+
+<div class="pros-cons">
+  <div class="pros">
+    <h4>Pros</h4>
+    <ul>
+      <li>A: fast, high-value, clean baseline</li>
+      <li>B: user value first</li>
+      <li>C: lowest risk, smallest diff</li>
+    </ul>
+  </div>
+  <div class="cons">
+    <h4>Cons</h4>
+    <ul>
+      <li>A: cleanup scope creeps over time</li>
+      <li>B: deferred cleanup debt</li>
+      <li>C: never addresses dead code</li>
+    </ul>
+  </div>
+</div>

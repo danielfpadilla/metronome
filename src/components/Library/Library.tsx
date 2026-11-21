@@ -73,7 +73,13 @@ export function Library() {
             onDelete={() => deleteTrack(track.id)}
             onEdit={() => setEditingTrack(track)}
             onPlay={track.source === 'youtube' && track.youtube_url ? () => setPlayingTrack(track) : undefined}
-            onSelectTrack={(bpm) => navigate(`/?bpm=${bpm}`)}
+            onSelectTrack={(track) => {
+              const params = new URLSearchParams({ bpm: String(track.bpm ?? 100) });
+              if (track.timeSignature) params.set('ts', track.timeSignature);
+              if (track.subdivision) params.set('sub', String(track.subdivision));
+              if (track.accentPattern?.length) params.set('accents', track.accentPattern.join(','));
+              navigate(`/?${params.toString()}`);
+            }}
           />
         ))}
       </div>
