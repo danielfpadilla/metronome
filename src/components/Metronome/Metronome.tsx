@@ -133,6 +133,14 @@ export function Metronome() {
         <div className="flex items-center justify-center gap-2">
           <PlayBar isPlaying={metro.isPlaying} onToggle={metro.toggle} />
         </div>
+
+        {/* Playlist selector - below play button */}
+        <PlaylistPlayer
+          initialPlaylistId={initialPlaylistId}
+          onBpmChange={metro.setBpm}
+          isPlaying={metro.isPlaying}
+          onTogglePlay={metro.toggle}
+        />
       </div>
 
       {/* Tap wheel + visual beat indicator */}
@@ -187,13 +195,6 @@ export function Metronome() {
           <SubdivisionButtons value={metro.subdivision} onChange={metro.setSubdivision} />
         </div>
       </div>
-
-      <PlaylistPlayer
-        initialPlaylistId={initialPlaylistId}
-        onBpmChange={metro.setBpm}
-        isPlaying={metro.isPlaying}
-        onTogglePlay={metro.toggle}
-      />
 
       <SettingsPanel
         isOpen={showSettings}
