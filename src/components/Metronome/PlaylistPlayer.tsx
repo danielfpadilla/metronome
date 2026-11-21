@@ -123,11 +123,11 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, isPlaying, onTo
             </button>
             <button
               onClick={() => setShowTrackList(!showTrackList)}
-              className="w-9 h-9 flex items-center justify-center rounded text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors text-xs flex-shrink-0"
+              className="px-2 h-9 flex items-center justify-center rounded text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors text-xs flex-shrink-0"
               aria-label={showTrackList ? 'Hide track list' : 'Show track list'}
               aria-expanded={showTrackList}
             >
-              {showTrackList ? '▲' : '▼'}
+              {showTrackList ? 'Hide' : 'Tracks'}
             </button>
           </>
         )}
