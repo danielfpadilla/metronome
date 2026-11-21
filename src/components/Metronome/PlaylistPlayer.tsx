@@ -22,6 +22,23 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, onSettingsChang
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(
     () => initialPlaylistId || localStorage.getItem(LAST_PLAYLIST_KEY)
   );
+  const [lastAppliedPlaylistId, setLastAppliedPlaylistId] = useState<string | null>(initialPlaylistId ?? null);
+  const [clearedPlaylistId, setClearedPlaylistId] = useState<string | null>(null);
+
+  // Apply a newly requested playlist; null means navigation without an explicit close.
+  if (
+    initialPlaylistId &&
+    initialPlaylistId !== lastAppliedPlaylistId &&
+    initialPlaylistId !== clearedPlaylistId &&
+    playlists.some((p) => p.id === initialPlaylistId)
+  ) {
+    setLastAppliedPlaylistId(initialPlaylistId);
+    setSelectedPlaylistId(initialPlaylistId);
+    setCurrentIndex(0);
+  }
+  if (!initialPlaylistId && clearedPlaylistId) {
+    setClearedPlaylistId(null);
+  }
 
   // Remember last loaded playlist across reloads
   useEffect(() => {
@@ -68,6 +85,8 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, onSettingsChang
     try { localStorage.removeItem(LAST_PLAYLIST_KEY); } catch { /* ignore */ }
     setCurrentIndex(0);
     setShowTrackList(false);
+    setLastAppliedPlaylistId(null);
+    setClearedPlaylistId(initialPlaylistId ?? null);
     onClearPlaylist?.();
   };
 

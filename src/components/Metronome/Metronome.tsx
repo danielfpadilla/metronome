@@ -20,7 +20,7 @@ export function Metronome() {
   const location = useLocation();
   const navigate = useNavigate();
   const urlParams = new URLSearchParams(location.search);
-  const showSettings = urlParams.has('settings');
+  const showSettings = urlParams.get('settings') === '1';
   const initialPlaylistId = urlParams.get('playlist');
 
   // Apply theme
@@ -173,7 +173,6 @@ export function Metronome() {
 
         {/* Playlist selector - below play button */}
         <PlaylistPlayer
-          key={initialPlaylistId ?? 'none'}
           initialPlaylistId={initialPlaylistId}
           onBpmChange={metro.setBpm}
           onSettingsChange={applyTrackSettings}

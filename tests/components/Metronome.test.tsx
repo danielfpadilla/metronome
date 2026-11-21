@@ -26,8 +26,17 @@ function seedPlaylist() {
     name: 'Test Playlist',
     description: null,
     created_at: '2026-01-01T00:00:00.000Z',
-    tracks: [{ playlist_id: 'p1', track_id: 't1', position: 0 }],
+    tracks: [
+      { playlist_id: 'p1', track_id: 't1', position: 0 },
+      { playlist_id: 'p1', track_id: 't2', position: 1 },
+    ],
   }]));
+  const track = (id: string, title: string) => ({
+    id, user_id: 'local', title, youtube_url: null, bpm: null,
+    duration_seconds: null, storage_path: null, cover_art_url: null,
+    source: 'manual', created_at: '2026-01-01T00:00:00.000Z', status: 'ready',
+  });
+  localStorage.setItem('metronome-tracks', JSON.stringify([track('t1', 'First track'), track('t2', 'Second track')]));
 }
 
 function Harness() {
@@ -39,6 +48,7 @@ function Harness() {
       <button onClick={() => navigate('/?settings=1')}>Open settings</button>
       <button onClick={() => navigate('/?playlist=p1')}>Open playlist</button>
       <button onClick={() => navigate('/?bpm=120')}>Open bpm</button>
+      <button onClick={() => navigate('/?playlist=p1&bpm=120')}>Open playlist and bpm</button>
       <div data-testid="location">{location.pathname + location.search}</div>
       <Routes>
         <Route path="/" element={<Metronome />} />
@@ -104,6 +114,9 @@ describe('Metronome', () => {
     await user.click(screen.getByLabelText('Close playlist'));
     expect(screen.queryByLabelText('Close playlist')).not.toBeInTheDocument();
     expect(screen.getByTestId('location').textContent).toBe('/');
+
+    await user.click(screen.getByRole('button', { name: 'Open playlist' }));
+    expect(screen.getByLabelText('Close playlist')).toBeInTheDocument();
   });
 
   it('loads a playlist when navigating from another route', async () => {
@@ -123,5 +136,41 @@ describe('Metronome', () => {
     await user.click(screen.getByRole('button', { name: 'Open bpm' }));
     expect(setBpm).toHaveBeenCalledWith(120);
     expect(screen.getByTestId('location').textContent).toBe('/');
+  });
+
+  it('applies bpm alongside playlist, stripping only bpm', async () => {
+    const user = userEvent.setup();
+    seedPlaylist();
+    renderHarness();
+
+    await user.click(screen.getByRole('button', { name: 'Open playlist and bpm' }));
+    expect(setBpm).toHaveBeenCalledWith(120);
+    expect(screen.getByTestId('location').textContent).toBe('/?playlist=p1');
+    expect(screen.getByLabelText('Close playlist')).toBeInTheDocument();
+  });
+
+  it('preserves playlist and current track index across settings and home navigation', async () => {
+    const user = userEvent.setup();
+    seedPlaylist();
+    renderHarness('/?playlist=p1');
+
+    expect(screen.getByLabelText('Close playlist')).toBeInTheDocument();
+    expect(screen.getByText('1/2')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Next track' }));
+    expect(screen.getByText('2/2')).toBeInTheDocument();
+    expect(screen.getByText('Second track')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Open settings' }));
+    expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(screen.getByLabelText('Close playlist')).toBeInTheDocument();
+    expect(screen.getByText('2/2')).toBeInTheDocument();
+    expect(screen.getByText('Second track')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Home' }));
+    expect(screen.getByLabelText('Close playlist')).toBeInTheDocument();
+    expect(screen.getByText('2/2')).toBeInTheDocument();
+    expect(screen.getByText('Second track')).toBeInTheDocument();
   });
 });
