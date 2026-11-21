@@ -8,6 +8,7 @@ import { PlayBar } from './PlayBar';
 import { BottomToolbar } from './BottomToolbar';
 import { BeatAccentBar } from './BeatAccentBar';
 import { SettingsPanel } from './SettingsPanel';
+import { PlaylistPlayer } from './PlaylistPlayer';
 import { useSettings } from '@/hooks/useSettings';
 import { tapTempoToBpm } from '@/lib/bpmMath';
 import type { TimeSignature } from '@/types';
@@ -164,6 +165,12 @@ export function Metronome() {
         </div>
         <BottomToolbar timeDisplay={displayTime} isPlaying={metro.isPlaying} onToggle={metro.toggle} />
       </div>
+
+      <PlaylistPlayer
+        onBpmChange={metro.setBpm}
+        isPlaying={metro.isPlaying}
+        onTogglePlay={metro.toggle}
+      />
 
       <SettingsPanel
         isOpen={showSettings}
