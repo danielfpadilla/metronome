@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const NAV_ITEMS = [
   { path: '/', label: 'Metronome', icon: '♪' },
@@ -10,13 +10,16 @@ const NAV_ITEMS = [
 export function BurgerMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const isSettingsActive = location.pathname === '/' && new URLSearchParams(location.search).get('settings') === '1';
 
   return (
     <>
-      {/* Hamburger button - fixed top-left on mobile */}
+      {/* Floating action button - opens menu (mobile) */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed top-3 left-3 z-50 md:hidden w-10 h-10 flex items-center justify-center rounded-lg bg-[var(--surface)] border border-[var(--line)] text-[var(--ink)] hover:text-[var(--accent)] transition-colors"
+        className="fixed bottom-6 right-6 z-50 md:hidden w-12 h-12 rounded-full bg-[var(--surface)] border border-[var(--line)] text-[var(--ink)] hover:text-[var(--accent)] transition-colors flex items-center justify-center shadow-lg"
         aria-label="Open menu"
         aria-expanded={isOpen}
       >
@@ -68,6 +71,21 @@ export function BurgerMenu() {
               </Link>
             );
           })}
+
+          <button
+            onClick={() => {
+              setIsOpen(false);
+              navigate('/?settings=1');
+            }}
+            className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${
+              isSettingsActive
+                ? 'bg-[var(--accent-dim)] text-[var(--accent)]'
+                : 'text-[var(--ink-2)] hover:bg-[var(--surface-2)] hover:text-[var(--ink)]'
+            }`}
+          >
+            <span className="text-lg">⚙</span>
+            <span className="font-medium">Settings</span>
+          </button>
         </div>
       </nav>
     </>

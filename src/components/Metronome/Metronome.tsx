@@ -76,10 +76,14 @@ export function Metronome() {
       }
     }
     const playlistParam = params.get('playlist');
+    const settingsParam = params.get('settings');
     if (playlistParam) {
       setInitialPlaylistId(playlistParam);
     }
-    if (bpmParam || playlistParam) {
+    if (settingsParam) {
+      setShowSettings(true);
+    }
+    if (bpmParam || playlistParam || settingsParam) {
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, [location.search, metro]);
