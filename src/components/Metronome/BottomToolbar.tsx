@@ -19,8 +19,6 @@ export function BottomToolbar({ timeDisplay, isPlaying, onToggle }: BottomToolba
         {isPlaying ? "STOP" : "PLAY"}
       </button>
       <span className="font-mono text-xs text-[#555] min-w-[40px] text-center">{timeDisplay}</span>
-      <button className="text-[#555] hover:text-white transition-colors p-1.5 rounded" aria-label="Pencil">✎</button>
-      <button className="text-[#555] hover:text-white transition-colors p-1.5 rounded" aria-label="Eraser">⌫</button>
     </div>
   );
 }

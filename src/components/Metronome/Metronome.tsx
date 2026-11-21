@@ -159,6 +159,7 @@ export function Metronome() {
       {/* Bottom section */}
       <div className="px-4 py-3 border-t border-[#222]">
         <div className="mb-3">
+          <p className="text-xs text-[#888] mb-2 text-center">Subdivision (notes per beat)</p>
           <SubdivisionButtons value={metro.subdivision} onChange={metro.setSubdivision} />
         </div>
         <BottomToolbar timeDisplay={displayTime} isPlaying={metro.isPlaying} onToggle={metro.toggle} />
