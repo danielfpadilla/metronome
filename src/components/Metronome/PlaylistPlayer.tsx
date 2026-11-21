@@ -27,8 +27,7 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, isPlaying, onTo
 
   const selectedPlaylist = playlists.find((p) => p.id === selectedPlaylistId) || null;
   const playlistTracks = selectedPlaylist?.tracks || [];
-  
-  // Look up track from tracks list (always fresh data)
+
   const getTrack = useCallback((trackId: string): Track | undefined => {
     return tracks.find((t) => t.id === trackId);
   }, [tracks]);
@@ -70,7 +69,7 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, isPlaying, onTo
 
   if (playlists.length === 0) {
     return (
-      <div className="px-4 py-2 border-t border-[var(--line)] text-center">
+      <div className="px-3 py-2 border-t border-[var(--line)] text-center">
         <p className="text-xs text-[var(--ink-3)]">
           No playlists yet. Create one in the{' '}
           <a href="/playlists" className="text-[var(--accent)] hover:underline">Playlists</a> page.
@@ -81,17 +80,18 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, isPlaying, onTo
 
   return (
     <div className="border-t border-[var(--line)] bg-[var(--surface)]">
-      {/* Playlist selector + transport */}
-      <div className="flex items-center gap-2 px-4 py-2">
+      {/* Playlist selector + transport - compact row */}
+      <div className="flex items-center gap-1.5 px-3 py-1.5">
         <select
           value={selectedPlaylistId || ''}
           onChange={(e) => handlePlaylistChange(e.target.value)}
           className="flex-1 min-w-0 px-2 py-1.5 bg-[var(--base)] border border-[var(--line)] rounded text-[var(--ink)] text-xs focus:outline-none focus:border-[var(--accent)] transition-colors truncate"
+          style={{ maxWidth: '40%' }}
         >
-          <option value="">Select playlist...</option>
+          <option value="">Playlist...</option>
           {playlists.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.name} ({p.tracks?.length ?? 0} tracks)
+              {p.name} ({p.tracks?.length ?? 0})
             </option>
           ))}
         </select>
@@ -101,14 +101,14 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, isPlaying, onTo
             <button
               onClick={prevTrack}
               disabled={currentIndex === 0}
-              className="w-10 h-10 flex items-center justify-center rounded text-[var(--ink-2)] hover:text-[var(--ink)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm"
+              className="w-9 h-9 flex items-center justify-center rounded text-[var(--ink-2)] hover:text-[var(--ink)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs flex-shrink-0"
               aria-label="Previous track"
             >
               ◀
             </button>
             <button
               onClick={onTogglePlay}
-              className="w-10 h-10 flex items-center justify-center rounded bg-[var(--accent)] text-[var(--base)] font-bold text-sm hover:shadow-[0_0_8px_var(--accent-glow)] transition-shadow"
+              className="w-9 h-9 flex items-center justify-center rounded bg-[var(--accent)] text-[var(--base)] font-bold text-xs hover:shadow-[0_0_8px_var(--accent-glow)] transition-shadow flex-shrink-0"
               aria-label={isPlaying ? 'Pause' : 'Play'}
             >
               {isPlaying ? '❚❚' : '▶'}
@@ -116,14 +116,14 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, isPlaying, onTo
             <button
               onClick={nextTrack}
               disabled={currentIndex >= playlistTracks.length - 1}
-              className="w-10 h-10 flex items-center justify-center rounded text-[var(--ink-2)] hover:text-[var(--ink)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm"
+              className="w-9 h-9 flex items-center justify-center rounded text-[var(--ink-2)] hover:text-[var(--ink)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs flex-shrink-0"
               aria-label="Next track"
             >
               ▶▶
             </button>
             <button
               onClick={() => setShowTrackList(!showTrackList)}
-              className="w-10 h-10 flex items-center justify-center rounded text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors text-sm"
+              className="w-9 h-9 flex items-center justify-center rounded text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors text-xs flex-shrink-0"
               aria-label={showTrackList ? 'Hide track list' : 'Show track list'}
               aria-expanded={showTrackList}
             >
@@ -133,25 +133,25 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, isPlaying, onTo
         )}
       </div>
 
-      {/* Current track info */}
+      {/* Current track info - compact single line */}
       {selectedPlaylist && currentTrack && (
-        <div className="px-4 pb-2 flex items-center gap-2">
-          <span className="text-xs text-[var(--ink-3)]">
+        <div className="px-3 pb-1.5 flex items-center gap-2">
+          <span className="text-[10px] text-[var(--ink-3)] font-mono">
             {currentIndex + 1}/{playlistTracks.length}
           </span>
           <span className="text-xs text-[var(--ink)] truncate flex-1">
             {currentTrack.title}
           </span>
-          <span className="text-xs text-[var(--accent)] font-mono">
-            {currentTrack.bpm ?? '—'} BPM
+          <span className="text-xs text-[var(--accent)] font-mono flex-shrink-0">
+            {currentTrack.bpm ?? '—'}
           </span>
         </div>
       )}
 
-      {/* Track list (collapsible) */}
+      {/* Track list (collapsible, scrollable, max height) */}
       {selectedPlaylist && showTrackList && (
-        <div className="px-4 pb-3 max-h-48 overflow-y-auto">
-          <div className="space-y-1">
+        <div className="px-3 pb-2 max-h-32 overflow-y-auto">
+          <div className="space-y-0.5">
             {playlistTracks.map((pt, index) => {
               const track = getTrack(pt.track_id);
               const isCurrent = index === currentIndex;
@@ -159,15 +159,15 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, isPlaying, onTo
                 <button
                   key={pt.track_id}
                   onClick={() => goToTrack(index)}
-                  className={`w-full text-left px-3 py-2 rounded text-xs flex items-center gap-2 transition-colors ${
+                  className={`w-full text-left px-2 py-1.5 rounded text-xs flex items-center gap-2 transition-colors ${
                     isCurrent
                       ? 'bg-[var(--accent-dim)] text-[var(--accent)]'
                       : 'text-[var(--ink-2)] hover:bg-[var(--surface-2)] hover:text-[var(--ink)]'
                   }`}
                 >
-                  <span className="w-5 text-center">{isCurrent ? '▶' : index + 1}</span>
+                  <span className="w-4 text-center text-[10px]">{isCurrent ? '▶' : index + 1}</span>
                   <span className="flex-1 truncate">{track?.title ?? 'Unknown'}</span>
-                  <span className="text-[var(--ink-3)] font-mono">{track?.bpm ?? '—'}</span>
+                  <span className="text-[var(--ink-3)] font-mono text-[10px]">{track?.bpm ?? '—'}</span>
                 </button>
               );
             })}

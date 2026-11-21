@@ -48,9 +48,9 @@ export function Metronome() {
   useEffect(() => {
     const updateSize = () => {
       const w = window.innerWidth;
-      if (w < 480) setWheelSize(220);
-      else if (w < 768) setWheelSize(260);
-      else setWheelSize(300);
+      if (w < 480) setWheelSize(180);
+      else if (w < 768) setWheelSize(240);
+      else setWheelSize(280);
     };
     updateSize();
     window.addEventListener('resize', updateSize);
@@ -143,7 +143,7 @@ export function Metronome() {
       </div>
 
       {/* Tap wheel + visual beat indicator */}
-      <div className="flex-1 flex flex-col items-center justify-center p-4 min-h-0 gap-4">
+      <div className="flex-1 flex flex-col items-center justify-center p-2 min-h-0 gap-2">
         {settings.pendulum ? (
           <div className="pendulum">
             <div
@@ -171,8 +171,8 @@ export function Metronome() {
           ))}
         </div>
         {/* Beat accent bar - just below tap wheel */}
-        <div className="w-full max-w-md mt-2">
-          <p className="text-xs text-[var(--ink-3)] mb-2 text-center">Beat Accents (click to cycle: Off → Low → Mid → High)</p>
+        <div className="w-full max-w-md mt-1">
+          <p className="text-[10px] text-[var(--ink-3)] mb-1 text-center">Beat Accents</p>
           <BeatAccentBar
             timeSignature={metro.timeSignature}
             accentPattern={settings.accentPattern}
@@ -188,9 +188,9 @@ export function Metronome() {
       </div>
 
       {/* Bottom section */}
-      <div className="px-4 py-3 border-t border-[var(--line)]">
-        <div className="mb-3">
-          <p className="text-xs text-[var(--ink-3)] mb-2 text-center">Subdivision (notes per beat)</p>
+      <div className="px-3 py-2 border-t border-[var(--line)]">
+        <div className="mb-2">
+          <p className="text-[10px] text-[var(--ink-3)] mb-1 text-center">Subdivision</p>
           <SubdivisionButtons value={metro.subdivision} onChange={metro.setSubdivision} />
         </div>
         <BottomToolbar timeDisplay={displayTime} isPlaying={metro.isPlaying} onToggle={metro.toggle} />
