@@ -141,6 +141,7 @@ export function Library() {
         onAddManual={addManualTrack}
       />
       <EditTrackModal
+        key={editingTrack?.id ?? 'none'}
         track={editingTrack}
         isOpen={!!editingTrack}
         onClose={() => setEditingTrack(null)}

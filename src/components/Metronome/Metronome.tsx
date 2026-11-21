@@ -17,9 +17,9 @@ const TIME_SIGNATURES: TimeSignature[] = ['2/4', '3/4', '4/4', '6/8'];
 export function Metronome() {
   const { settings, updateSettings } = useSettings();
   const tapTimesRef = useRef<number[]>([]);
-  const [showSettings, setShowSettings] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const [showSettings, setShowSettings] = useState(() => new URLSearchParams(location.search).has('settings'));
 
   // Apply theme
   useEffect(() => {
@@ -67,22 +67,25 @@ export function Metronome() {
     }
   }, [metro, updateSettings]);
 
+  const { setTimeSignature, setSubdivision } = metro;
+  const currentTs = metro.timeSignature;
+
   const applyTrackSettings = useCallback((track: Track) => {
     if (track.timeSignature && TIME_SIGNATURES.includes(track.timeSignature)) {
-      metro.setTimeSignature(track.timeSignature);
+      setTimeSignature(track.timeSignature);
     }
     if (track.subdivision && [1, 2, 3, 4].includes(track.subdivision)) {
-      metro.setSubdivision(track.subdivision as Subdivision);
+      setSubdivision(track.subdivision as Subdivision);
     }
     if (track.accentPattern?.length) {
-      const beats = parseInt((track.timeSignature ?? metro.timeSignature).split('/')[0], 10);
+      const beats = parseInt((track.timeSignature ?? currentTs).split('/')[0], 10);
       if (track.accentPattern.length === beats && track.accentPattern.every((v) => Number.isInteger(v) && v >= 0 && v <= 3)) {
         updateSettings({ accentPattern: [...track.accentPattern] });
       }
     }
-  }, [metro.setTimeSignature, metro.setSubdivision, metro.timeSignature, updateSettings]);
+  }, [setTimeSignature, setSubdivision, currentTs, updateSettings]);
 
-  const [initialPlaylistId, setInitialPlaylistId] = useState<string | null>(null);
+  const [initialPlaylistId] = useState<string | null>(() => new URLSearchParams(location.search).get('playlist'));
 
   // Apply BPM, playlist and per-track settings from URL params
   useEffect(() => {
@@ -112,12 +115,10 @@ export function Metronome() {
     }
     const playlistParam = params.get('playlist');
     const settingsParam = params.get('settings');
-    if (playlistParam) setInitialPlaylistId(playlistParam);
-    if (settingsParam) setShowSettings(true);
     if (bpmParam || tsParam || subParam || accentsParam || playlistParam || settingsParam) {
       navigate(window.location.pathname, { replace: true });
     }
-  }, [location.search, metro, updateSettings]);
+  }, [location.search, metro, updateSettings, navigate]);
 
   // Elapsed time display (kept for future use)
 

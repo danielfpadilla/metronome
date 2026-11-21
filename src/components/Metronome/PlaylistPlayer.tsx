@@ -16,6 +16,8 @@ interface PlaylistPlayerProps {
 export function PlaylistPlayer({ initialPlaylistId, onBpmChange, onSettingsChange, isPlaying, onTogglePlay }: PlaylistPlayerProps) {
   const { playlists } = usePlaylists();
   const { tracks } = useTracks();
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [showTrackList, setShowTrackList] = useState(false);
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(
     () => initialPlaylistId || localStorage.getItem(LAST_PLAYLIST_KEY)
   );
@@ -26,17 +28,6 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, onSettingsChang
       try { localStorage.setItem(LAST_PLAYLIST_KEY, selectedPlaylistId); } catch { /* ignore */ }
     }
   }, [selectedPlaylistId]);
-
-  // Sync with initialPlaylistId prop
-  useEffect(() => {
-    if (!initialPlaylistId) return;
-    const playlist = playlists.find((p) => p.id === initialPlaylistId);
-    if (!playlist) return;
-    setSelectedPlaylistId(initialPlaylistId);
-    setCurrentIndex(0);
-  }, [initialPlaylistId, playlists]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [showTrackList, setShowTrackList] = useState(false);
 
   const selectedPlaylist = playlists.find((p) => p.id === selectedPlaylistId) || null;
   const playlistTracks = selectedPlaylist?.tracks || [];
@@ -54,29 +45,29 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, onSettingsChang
     onSettingsChange?.(currentTrack);
   }, [currentIndex, currentTrack, onBpmChange, onSettingsChange]);
 
-  const goToTrack = useCallback((index: number) => {
+  const goToTrack = (index: number) => {
     if (index < 0 || index >= playlistTracks.length) return;
     setCurrentIndex(index);
-  }, [playlistTracks.length]);
+  };
 
-  const nextTrack = useCallback(() => {
+  const nextTrack = () => {
     if (currentIndex < playlistTracks.length - 1) {
       setCurrentIndex((i) => i + 1);
     }
-  }, [currentIndex, playlistTracks.length]);
+  };
 
-  const prevTrack = useCallback(() => {
+  const prevTrack = () => {
     if (currentIndex > 0) {
       setCurrentIndex((i) => i - 1);
     }
-  }, [currentIndex]);
+  };
 
-  const clearPlaylist = useCallback(() => {
+  const clearPlaylist = () => {
     setSelectedPlaylistId(null);
     try { localStorage.removeItem(LAST_PLAYLIST_KEY); } catch { /* ignore */ }
     setCurrentIndex(0);
     setShowTrackList(false);
-  }, []);
+  };
 
   if (!selectedPlaylist) {
     // Show selector when no playlist is loaded

@@ -42,6 +42,7 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
   const nextBeatTimeRef = useRef(0);
   const beatCountRef = useRef(0);
   const timerRef = useRef<number | null>(null);
+  const schedulerRef = useRef<() => void>(() => {});
   const bpmRef = useRef(bpm);
   const tsRef = useRef(timeSignature);
   const subRef = useRef(subdivision);
@@ -169,7 +170,7 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
     playLevel(ctx, ctx.currentTime, level, { low: actualVolume, mid: actualVolume, high: actualVolume }, soundType);
   }, [playLevel]);
 
-  const scheduler = useCallback(() => {
+  const scheduler = useCallback(function schedule() {
     if (!isPlayingRef.current) return;
     const ctx = audioCtxRef.current;
     if (!ctx) return;
@@ -205,8 +206,10 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
       nextBeatTimeRef.current += interval / 1000;
       beatCountRef.current += 1;
     }
-    timerRef.current = window.setTimeout(scheduler, 25);
-  }, [playLevel, subdivisionInterval]);
+    timerRef.current = window.setTimeout(() => schedulerRef.current(), 25);
+  }, [playLevel]);
+
+  useEffect(() => { schedulerRef.current = scheduler; }, [scheduler]);
 
   const start = useCallback(() => {
     if (isPlaying) return;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { Track, TimeSignature, Subdivision } from '@/types';
 import { beatsPerMeasure } from '@/lib/bpmMath';
 
@@ -19,25 +19,15 @@ function defaultPattern(ts: TimeSignature): number[] {
 }
 
 export function EditTrackModal({ track, isOpen, onClose, onSave }: EditTrackModalProps) {
-  const [title, setTitle] = useState('');
-  const [bpm, setBpm] = useState<string>('');
-  const [timeSignature, setTimeSignature] = useState<TimeSignature>('4/4');
-  const [subdivision, setSubdivision] = useState<Subdivision>(1);
-  const [accentPattern, setAccentPattern] = useState<number[]>(defaultPattern('4/4'));
-
-  useEffect(() => {
-    if (track) {
-      setTitle(track.title);
-      setBpm(track.bpm ? String(track.bpm) : '');
-      setTimeSignature(track.timeSignature ?? '4/4');
-      setSubdivision(track.subdivision ?? 1);
-      setAccentPattern(
-        track.accentPattern && track.accentPattern.length === beatsPerMeasure(track.timeSignature ?? '4/4')
-          ? [...track.accentPattern]
-          : defaultPattern(track.timeSignature ?? '4/4')
-      );
-    }
-  }, [track]);
+  const [title, setTitle] = useState(track?.title ?? '');
+  const [bpm, setBpm] = useState(track?.bpm ? String(track.bpm) : '');
+  const [timeSignature, setTimeSignature] = useState<TimeSignature>(track?.timeSignature ?? '4/4');
+  const [subdivision, setSubdivision] = useState<Subdivision>(track?.subdivision ?? 1);
+  const [accentPattern, setAccentPattern] = useState<number[]>(
+    track?.accentPattern && track.accentPattern.length === beatsPerMeasure(track.timeSignature ?? '4/4')
+      ? [...track.accentPattern]
+      : defaultPattern(track?.timeSignature ?? '4/4')
+  );
 
   if (!isOpen || !track) return null;
 
