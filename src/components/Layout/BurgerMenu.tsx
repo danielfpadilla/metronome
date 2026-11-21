@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const NAV_ITEMS = [
   { path: '/', label: 'Metronome', icon: '♪' },
@@ -14,80 +14,51 @@ export function BurgerMenu() {
 
   const isSettingsActive = location.pathname === '/' && new URLSearchParams(location.search).get('settings') === '1';
 
+  const go = (path: string) => {
+    setIsOpen(false);
+    navigate(path);
+  };
+
+  const speedDialAction = (item: { path: string; label: string; icon: string }) => (
+    <button
+      onClick={() => go(item.path)}
+      className={`w-12 h-12 rounded-full bg-[var(--surface)] border border-[var(--line)] text-[var(--ink)] hover:text-[var(--accent)] transition-colors flex items-center justify-center shadow-lg ${
+        location.pathname === item.path ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : ''
+      }`}
+      aria-label={item.label}
+      aria-current={location.pathname === item.path ? 'page' : undefined}
+    >
+      <span className="text-lg">{item.icon}</span>
+    </button>
+  );
+
   return (
     <>
-      {/* Floating action button - opens menu (mobile) */}
+      {/* Speed dial FAB */}
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => setIsOpen((v) => !v)}
         className="fixed bottom-6 right-6 z-50 md:hidden w-12 h-12 rounded-full bg-[var(--surface)] border border-[var(--line)] text-[var(--ink)] hover:text-[var(--accent)] transition-colors flex items-center justify-center shadow-lg"
-        aria-label="Open menu"
+        aria-label={isOpen ? 'Close menu' : 'Open menu'}
         aria-expanded={isOpen}
       >
-        <span className="text-lg leading-none">☰</span>
+        <span className="text-xl leading-none">{isOpen ? '✕' : '☰'}</span>
       </button>
 
-      {/* Overlay */}
+      {/* Speed dial actions */}
       {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 z-50 md:hidden"
-          onClick={() => setIsOpen(false)}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Slide-out menu - bottom sheet anchored to FAB */}
-      <nav
-        className={`fixed bottom-0 left-0 right-0 w-full bg-[var(--surface)] border-t border-[var(--line)] rounded-t-2xl z-50 transform transition-transform duration-200 ease-out md:hidden ${
-          isOpen ? 'translate-y-0' : '-translate-y-full'
-        }`}
-        aria-label="Main navigation"
-      >
-        <div className="flex items-center justify-between p-4 border-b border-[var(--line)]">
-          <span className="text-xl font-bold text-[var(--accent)]">Metronome</span>
+        <div className="fixed bottom-24 right-6 z-50 md:hidden flex flex-col items-end gap-3">
+          {NAV_ITEMS.map((item) => speedDialAction(item))}
           <button
-            onClick={() => setIsOpen(false)}
-            className="w-8 h-8 flex items-center justify-center text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors"
-            aria-label="Close menu"
-          >
-            ✕
-          </button>
-        </div>
-        <div className="p-3 space-y-1">
-          {NAV_ITEMS.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${
-                  isActive
-                    ? 'bg-[var(--accent-dim)] text-[var(--accent)]'
-                    : 'text-[var(--ink-2)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)]'
-                }`}
-              >
-                <span className="text-lg">{item.icon}</span>
-                <span className="font-medium">{item.label}</span>
-              </Link>
-            );
-          })}
-
-          <button
-            onClick={() => {
-              setIsOpen(false);
-              navigate('/?settings=1');
-            }}
-            className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${
-              isSettingsActive
-                ? 'bg-[var(--accent-dim)] text-[var(--accent)]'
-                : 'text-[var(--ink-2)] hover:bg-[var(--surface-2)] hover:text-[var(--ink)]'
+            onClick={() => go('/?settings=1')}
+            className={`w-12 h-12 rounded-full bg-[var(--surface)] border border-[var(--line)] text-[var(--ink)] hover:text-[var(--accent)] transition-colors flex items-center justify-center shadow-lg ${
+              isSettingsActive ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : ''
             }`}
+            aria-label="Settings"
           >
             <span className="text-lg">⚙</span>
-            <span className="font-medium">Settings</span>
           </button>
         </div>
-      </nav>
+      )}
     </>
   );
 }
