@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useMetronome } from '@/hooks/useMetronome';
 import { TapWheel } from './TapWheel';
 import { BpmDisplay } from './BpmDisplay';
@@ -19,6 +19,7 @@ export function Metronome() {
   const tapTimesRef = useRef<number[]>([]);
   const [showSettings, setShowSettings] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Apply theme
   useEffect(() => {
@@ -84,7 +85,7 @@ export function Metronome() {
       setShowSettings(true);
     }
     if (bpmParam || playlistParam || settingsParam) {
-      window.history.replaceState({}, '', window.location.pathname);
+      navigate(window.location.pathname, { replace: true });
     }
   }, [location.search, metro]);
 
@@ -101,14 +102,14 @@ export function Metronome() {
       {/* Top controls */}
       <div className="px-4 py-3 border-b border-[var(--line)]">
         <div className="flex items-center justify-between mb-3">
-          <div className="w-9 h-9" />
+          <div className="w-14 h-9 flex items-center justify-center text-[var(--ink)] font-bold text-xs">Metronome</div>
           <BpmDisplay
             bpm={metro.bpm}
             flash={flashNumbers}
             onIncrement={() => metro.setBpm(metro.bpm + 1)}
             onDecrement={() => metro.setBpm(metro.bpm - 1)}
           />
-          <div className="w-9 h-9" />
+          <div className="w-14 h-9" />
         </div>
 
         {/* Time signature selector */}
