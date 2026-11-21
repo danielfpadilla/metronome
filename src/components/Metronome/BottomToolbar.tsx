@@ -6,8 +6,8 @@ interface BottomToolbarProps {
 
 export function BottomToolbar({ timeDisplay, isPlaying, onToggle }: BottomToolbarProps) {
   const primaryClass = isPlaying
-    ? "text-[#00e0c6] hover:text-white transition-colors p-1.5 rounded"
-    : "text-[#555] hover:text-white transition-colors p-1.5 rounded";
+    ? "text-[var(--accent)] hover:text-[var(--ink)] transition-colors p-1.5 rounded font-semibold"
+    : "text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors p-1.5 rounded font-semibold";
 
   return (
     <div className="flex items-center justify-center gap-4 h-10">
@@ -18,7 +18,7 @@ export function BottomToolbar({ timeDisplay, isPlaying, onToggle }: BottomToolba
       >
         {isPlaying ? "STOP" : "PLAY"}
       </button>
-      <span className="font-mono text-xs text-[#555] min-w-[40px] text-center">{timeDisplay}</span>
+      <span className="font-mono text-xs text-[var(--ink-3)] min-w-[40px] text-center">{timeDisplay}</span>
     </div>
   );
 }

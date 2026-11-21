@@ -5,8 +5,24 @@ export default {
   theme: {
     extend: {
       colors: {
-        accent: '#00e0c6',
-        'accent-dim': 'rgba(0, 224, 198, 0.15)',
+        base: 'var(--base)',
+        surface: 'var(--surface)',
+        'surface-2': 'var(--surface-2)',
+        ink: 'var(--ink)',
+        'ink-2': 'var(--ink-2)',
+        'ink-3': 'var(--ink-3)',
+        line: 'var(--line)',
+        'line-2': 'var(--line-2)',
+        accent: 'var(--accent)',
+        danger: 'var(--danger)',
+      },
+      fontFamily: {
+        display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+        text: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', '"SF Mono"', 'ui-monospace', 'monospace'],
+      },
+      borderRadius: {
+        DEFAULT: 'var(--radius)',
       },
     },
   },

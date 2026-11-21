@@ -66,14 +66,14 @@ export function Metronome() {
   const flashNumbers = settings.flashNumbers && metro.isPlaying && metro.currentBeat === 0;
 
   return (
-    <div className="relative flex flex-col h-full bg-[#111]">
+    <div className="relative flex flex-col h-full bg-[var(--base)]">
       {/* Fullscreen accent flash */}
       {flashScreenActive && <div key={metro.currentBeat} className="flash-overlay" />}
 
       {/* Top controls */}
-      <div className="px-4 py-3 border-b border-[#222]">
+      <div className="px-4 py-3 border-b border-[var(--line)]">
         <div className="flex items-center justify-between mb-3">
-          <div className="w-9 h-9 flex items-center justify-center text-[#888]">♪</div>
+          <div className="w-9 h-9 flex items-center justify-center text-[var(--ink-3)]">♪</div>
           <BpmDisplay
             bpm={metro.bpm}
             flash={flashNumbers}
@@ -81,10 +81,10 @@ export function Metronome() {
             onDecrement={() => metro.setBpm(metro.bpm - 1)}
           />
           <div className="flex gap-1">
-            <div className="w-9 h-9 flex items-center justify-center text-[#888]">♪</div>
+            <div className="w-9 h-9 flex items-center justify-center text-[var(--ink-3)]">♪</div>
             <button
               onClick={() => setShowSettings(true)}
-              className="w-9 h-9 flex items-center justify-center text-[#888] hover:text-white"
+              className="w-9 h-9 flex items-center justify-center text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors"
               aria-label="Settings"
             >
               ⚙
@@ -94,11 +94,11 @@ export function Metronome() {
 
         {/* Time signature selector */}
         <div className="flex items-center justify-center gap-2 mb-2">
-          <span className="text-xs text-[#888]">Time Signature:</span>
+          <span className="text-xs text-[var(--ink-3)]">Time Signature:</span>
           <select
             value={metro.timeSignature}
             onChange={(e) => metro.setTimeSignature(e.target.value as TimeSignature)}
-            className="bg-[#1a1a1a] border border-[#2a2a2a] text-white text-xs rounded px-2 py-1 focus:outline-none focus:border-[#00e0c6]"
+            className="bg-[var(--surface)] border border-[var(--line)] text-[var(--ink)] text-xs rounded px-2 py-1 focus:outline-none focus:border-[var(--accent)] transition-colors"
           >
             {TIME_SIGNATURES.map((ts) => (
               <option key={ts} value={ts}>{ts}</option>
@@ -132,16 +132,16 @@ export function Metronome() {
               className={`w-3 h-3 rounded-full transition-all duration-100 ${
                 metro.currentBeat === i
                   ? i === 0
-                    ? 'bg-[#00e0c6] scale-125 shadow-[0_0_8px_rgba(0,224,198,0.5)]'
-                    : 'bg-white scale-110'
-                  : 'bg-[#333]'
+                    ? 'bg-[var(--accent)] scale-125 shadow-[0_0_8px_var(--accent-glow)]'
+                    : 'bg-[var(--ink)] scale-110'
+                  : 'bg-[var(--line-2)]'
               }`}
             />
           ))}
         </div>
         {/* Beat accent bar - just below tap wheel */}
         <div className="w-full max-w-md mt-2">
-          <p className="text-xs text-[#888] mb-2 text-center">Beat Accents (click to cycle: Off → Low → Mid → High)</p>
+          <p className="text-xs text-[var(--ink-3)] mb-2 text-center">Beat Accents (click to cycle: Off → Low → Mid → High)</p>
           <BeatAccentBar
             timeSignature={metro.timeSignature}
             accentPattern={settings.accentPattern}
@@ -157,9 +157,9 @@ export function Metronome() {
       </div>
 
       {/* Bottom section */}
-      <div className="px-4 py-3 border-t border-[#222]">
+      <div className="px-4 py-3 border-t border-[var(--line)]">
         <div className="mb-3">
-          <p className="text-xs text-[#888] mb-2 text-center">Subdivision (notes per beat)</p>
+          <p className="text-xs text-[var(--ink-3)] mb-2 text-center">Subdivision (notes per beat)</p>
           <SubdivisionButtons value={metro.subdivision} onChange={metro.setSubdivision} />
         </div>
         <BottomToolbar timeDisplay={displayTime} isPlaying={metro.isPlaying} onToggle={metro.toggle} />

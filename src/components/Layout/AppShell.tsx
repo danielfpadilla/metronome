@@ -19,10 +19,10 @@ export function AppShell({ children }: AppShellProps) {
   }, []);
 
   return (
-    <div className="flex h-screen bg-[#0f0f14]">
+    <div className="flex h-screen bg-[var(--base)]">
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex flex-col w-56 bg-[#1a1a24] border-r border-[#333] p-4">
-        <div className="text-xl font-bold text-[#00e0c6] mb-6">Metronome</div>
+      <aside className="hidden md:flex flex-col w-56 bg-[var(--surface)] border-r border-[var(--line)] p-4">
+        <div className="text-xl font-bold text-[var(--accent)] mb-6">Metronome</div>
         <nav className="space-y-1">
           {[
             { path: '/', label: 'Metronome', icon: '♪' },
@@ -32,7 +32,7 @@ export function AppShell({ children }: AppShellProps) {
             <Link
               key={item.path}
               to={item.path}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-[#888] hover:text-white hover:bg-[#0f0f14] transition-colors"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--ink-2)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)] transition-colors"
             >
               <span>{item.icon}</span>
               <span>{item.label}</span>

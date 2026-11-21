@@ -45,10 +45,10 @@ export function SettingsPanel({ isOpen, onClose, settings, onChange, previewSoun
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#1a1a24] rounded-xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
+      <div className="bg-[var(--surface)] rounded-xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto border border-[var(--line)]">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-white">Settings</h2>
-          <button onClick={onClose} className="text-[#888] hover:text-white" aria-label="Close">✕</button>
+          <h2 className="text-xl font-bold text-[var(--ink)]">Settings</h2>
+          <button onClick={onClose} className="text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors" aria-label="Close">✕</button>
         </div>
 
         <div className="space-y-4">
