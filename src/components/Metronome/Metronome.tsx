@@ -37,6 +37,20 @@ export function Metronome() {
     accentPattern: settings.accentPattern,
   });
 
+  // Responsive tap wheel size
+  const [wheelSize, setWheelSize] = useState(280);
+  useEffect(() => {
+    const updateSize = () => {
+      const w = window.innerWidth;
+      if (w < 480) setWheelSize(220);
+      else if (w < 768) setWheelSize(260);
+      else setWheelSize(300);
+    };
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
+
   const handleTap = useCallback(() => {
     const now = Date.now();
     tapTimesRef.current = [...tapTimesRef.current, now].slice(-6);
@@ -123,7 +137,7 @@ export function Metronome() {
             <div className="pendulum-weight" />
           </div>
         ) : (
-          <TapWheel onTap={handleTap} onRotate={(delta) => metro.setBpm(metro.bpm + delta)} />
+          <TapWheel onTap={handleTap} onRotate={(delta) => metro.setBpm(metro.bpm + delta)} size={wheelSize} />
         )}
         {/* Visual beat indicator */}
         <div className="flex gap-2">

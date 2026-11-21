@@ -83,14 +83,14 @@ export function PlaylistPlayer({ onBpmChange, isPlaying, onTogglePlay }: Playlis
             <button
               onClick={prevTrack}
               disabled={currentIndex === 0}
-              className="w-8 h-8 flex items-center justify-center rounded text-[var(--ink-2)] hover:text-[var(--ink)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs"
+              className="w-10 h-10 flex items-center justify-center rounded text-[var(--ink-2)] hover:text-[var(--ink)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm"
               aria-label="Previous track"
             >
               ◀
             </button>
             <button
               onClick={onTogglePlay}
-              className="w-8 h-8 flex items-center justify-center rounded bg-[var(--accent)] text-[var(--base)] font-bold text-xs hover:shadow-[0_0_8px_var(--accent-glow)] transition-shadow"
+              className="w-10 h-10 flex items-center justify-center rounded bg-[var(--accent)] text-[var(--base)] font-bold text-sm hover:shadow-[0_0_8px_var(--accent-glow)] transition-shadow"
               aria-label={isPlaying ? 'Pause' : 'Play'}
             >
               {isPlaying ? '❚❚' : '▶'}
@@ -98,14 +98,14 @@ export function PlaylistPlayer({ onBpmChange, isPlaying, onTogglePlay }: Playlis
             <button
               onClick={nextTrack}
               disabled={currentIndex >= playlistTracks.length - 1}
-              className="w-8 h-8 flex items-center justify-center rounded text-[var(--ink-2)] hover:text-[var(--ink)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs"
+              className="w-10 h-10 flex items-center justify-center rounded text-[var(--ink-2)] hover:text-[var(--ink)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm"
               aria-label="Next track"
             >
               ▶▶
             </button>
             <button
               onClick={() => setShowTrackList(!showTrackList)}
-              className="w-8 h-8 flex items-center justify-center rounded text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors text-xs"
+              className="w-10 h-10 flex items-center justify-center rounded text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors text-sm"
               aria-label={showTrackList ? 'Hide track list' : 'Show track list'}
               aria-expanded={showTrackList}
             >

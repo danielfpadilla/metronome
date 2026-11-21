@@ -8,19 +8,19 @@ const NAV_ITEMS = [
 
 export function BottomNav() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-[#1a1a24] border-t border-[#333] flex md:hidden z-40">
+    <nav className="fixed bottom-0 left-0 right-0 bg-[var(--surface)] border-t border-[var(--line)] flex md:hidden z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {NAV_ITEMS.map((item) => (
         <NavLink
           key={item.path}
           to={item.path}
           className={({ isActive }) =>
-            `flex-1 flex flex-col items-center py-2 text-xs transition-colors ${
-              isActive ? 'text-[#00e0c6]' : 'text-[#888] hover:text-white'
+            `flex-1 flex flex-col items-center justify-center py-2 min-h-[56px] text-xs transition-colors ${
+              isActive ? 'text-[var(--accent)]' : 'text-[var(--ink-3)] hover:text-[var(--ink)]'
             }`
           }
         >
-          <span className="text-lg">{item.icon}</span>
-          <span>{item.label}</span>
+          <span className="text-xl leading-none">{item.icon}</span>
+          <span className="mt-0.5">{item.label}</span>
         </NavLink>
       ))}
     </nav>
