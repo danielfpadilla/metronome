@@ -75,6 +75,12 @@ export function useTracks() {
     };
 
     await setDoc(doc(firestoreDb, 'users', user.id, 'tracks', track.id), track);
+    // Refresh tracks list
+    const tracksRef = collection(firestoreDb, 'users', user.id, 'tracks');
+    const q = query(tracksRef, orderBy('created_at', 'desc'));
+    const snapshot = await getDocs(q);
+    const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Track));
+    setTracks(data);
     return track;
   }, [user]);
 
@@ -96,12 +102,24 @@ export function useTracks() {
     };
 
     await setDoc(doc(firestoreDb, 'users', user.id, 'tracks', track.id), track);
+    // Refresh tracks list
+    const tracksRef = collection(firestoreDb, 'users', user.id, 'tracks');
+    const q = query(tracksRef, orderBy('created_at', 'desc'));
+    const snapshot = await getDocs(q);
+    const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Track));
+    setTracks(data);
     return track;
   }, [user]);
 
   const deleteTrack = useCallback(async (id: string) => {
     if (!user) return;
     await deleteDoc(doc(firestoreDb, 'users', user.id, 'tracks', id));
+    // Refresh tracks list
+    const tracksRef = collection(firestoreDb, 'users', user.id, 'tracks');
+    const q = query(tracksRef, orderBy('created_at', 'desc'));
+    const snapshot = await getDocs(q);
+    const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Track));
+    setTracks(data);
   }, [user]);
 
   return { tracks, loading, fetchTracks, addYouTubeTrack, addManualTrack, deleteTrack };
