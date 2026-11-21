@@ -180,10 +180,10 @@ export function Metronome() {
         </div>
       </div>
 
-      {/* Bottom section */}
-      <div className="px-3 py-2 border-t border-[var(--line)]">
-        <div className="mb-2">
-          <p className="text-[10px] text-[var(--ink-3)] mb-1 text-center">Subdivision</p>
+      {/* Bottom section - compact */}
+      <div className="px-3 py-1.5 border-t border-[var(--line)]">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-[var(--ink-3)] flex-shrink-0">Subdiv:</span>
           <SubdivisionButtons value={metro.subdivision} onChange={metro.setSubdivision} />
         </div>
       </div>

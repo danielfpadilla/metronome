@@ -20,16 +20,16 @@ export function SubdivisionButtons({ value, onChange }: SubdivisionButtonsProps)
   };
 
   return (
-    <div className="flex gap-2 justify-center">
+    <div className="flex gap-1.5 justify-center">
       {([1, 2, 3, 4] as Subdivision[]).map((s) => (
         <button
           key={s}
           onClick={() => onChange(s)}
           title={titles[s]}
-          className={`w-10 h-10 rounded-lg border transition-colors flex items-center justify-center text-sm font-medium ${
+          className={`w-9 h-9 rounded-lg border transition-colors flex items-center justify-center text-sm font-medium ${
             value === s
-              ? 'bg-[#222] border-[#00e0c6] text-[#00e0c6]'
-              : 'bg-[#1a1a1a] border-[#2a2a2a] text-[#888] hover:border-[#444] hover:text-white'
+              ? 'bg-[var(--surface-2)] border-[var(--accent)] text-[var(--accent)]'
+              : 'bg-[var(--base)] border-[var(--line)] text-[var(--ink-3)] hover:border-[var(--line-2)] hover:text-[var(--ink)]'
           }`}
           aria-label={titles[s]}
           aria-pressed={value === s}

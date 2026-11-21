@@ -79,7 +79,7 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, isPlaying, onTo
   }
 
   return (
-    <div className="border-t border-[var(--line)] bg-[var(--surface)]">
+    <div className="relative border-t border-[var(--line)] bg-[var(--surface)]">
       {/* Playlist selector + transport - compact row */}
       <div className="flex items-center gap-1.5 px-3 py-1.5">
         <select
@@ -148,10 +148,10 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, isPlaying, onTo
         </div>
       )}
 
-      {/* Track list (collapsible, scrollable, max height) */}
+      {/* Track list (collapsible, overlay, max height) */}
       {selectedPlaylist && showTrackList && (
-        <div className="px-3 pb-2 max-h-32 overflow-y-auto">
-          <div className="space-y-0.5">
+        <div className="absolute bottom-full left-0 right-0 px-3 pb-2 max-h-40 overflow-y-auto bg-[var(--surface)] border-t border-[var(--line)] shadow-lg">
+          <div className="space-y-0.5 py-2">
             {playlistTracks.map((pt, index) => {
               const track = getTrack(pt.track_id);
               const isCurrent = index === currentIndex;
