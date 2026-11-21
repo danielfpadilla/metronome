@@ -1,149 +1,102 @@
 import { useState, useEffect, useCallback } from 'react';
-import { db as firestoreDb } from '@/lib/firebase';
-import {
-  collection,
-  doc,
-  getDocs,
-  getDoc,
-  setDoc,
-  deleteDoc,
-  onSnapshot,
-  query,
-  orderBy,
-} from 'firebase/firestore';
-import { useAuth } from './useAuth';
 import type { Playlist, PlaylistTrack, Track } from '@/types';
 
+const STORAGE_KEY = 'metronome-playlists';
+
+function loadPlaylists(): Playlist[] {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+}
+
+function savePlaylists(playlists: Playlist[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(playlists));
+  } catch {
+    /* ignore quota errors */
+  }
+}
+
 export function usePlaylists() {
-  const { user } = useAuth();
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [playlists, setPlaylists] = useState<Playlist[]>(loadPlaylists);
+  const [loading] = useState(false);
 
-  const fetchPlaylists = useCallback(async () => {
-    if (!user) {
-      setPlaylists([]);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const playlistsRef = collection(firestoreDb, 'users', user.id, 'playlists');
-      const q = query(playlistsRef, orderBy('created_at', 'desc'));
-      const snapshot = await getDocs(q);
-      const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Playlist));
-      setPlaylists(data);
-    } catch (err) {
-      console.warn('Firestore fetch failed:', err);
-      setPlaylists([]);
-    }
-    setLoading(false);
-  }, [user]);
-
-  // Real-time listener
   useEffect(() => {
-    if (!user) return;
-
-    const playlistsRef = collection(firestoreDb, 'users', user.id, 'playlists');
-    const q = query(playlistsRef, orderBy('created_at', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Playlist));
-      setPlaylists(data);
-    }, (err) => {
-      console.warn('Firestore listener error:', err);
-    });
-
-    return () => unsubscribe();
-  }, [user]);
-
-  useEffect(() => { fetchPlaylists(); }, [fetchPlaylists]);
+    savePlaylists(playlists);
+  }, [playlists]);
 
   const createPlaylist = useCallback(async (name: string, description?: string) => {
-    if (!user) throw new Error('Not authenticated');
-
     const playlist: Playlist = {
       id: crypto.randomUUID(),
-      user_id: user.id,
+      user_id: 'local',
       name,
       description: description || null,
       created_at: new Date().toISOString(),
       tracks: [],
     };
-
-    await setDoc(doc(firestoreDb, 'users', user.id, 'playlists', playlist.id), playlist);
+    setPlaylists((prev) => [playlist, ...prev]);
     return playlist;
-  }, [user]);
+  }, []);
 
   const deletePlaylist = useCallback(async (id: string) => {
-    if (!user) return;
-    await deleteDoc(doc(firestoreDb, 'users', user.id, 'playlists', id));
-  }, [user]);
+    setPlaylists((prev) => prev.filter((p) => p.id !== id));
+  }, []);
 
   const addTrackToPlaylist = useCallback(async (playlistId: string, trackId: string, position: number) => {
-    if (!user) return;
-    // Need to fetch the track from Firestore
-    // For now, just update the playlist
-    const playlist = playlists.find((p) => p.id === playlistId);
-    if (!playlist) return;
-
-    // Fetch track from Firestore
-    let track: Track | null = null;
+    // Find the track from all tracks in localStorage
+    let track: Track | undefined;
     try {
-      const trackDoc = await getDoc(doc(firestoreDb, 'users', user.id, 'tracks', trackId));
-      if (trackDoc.exists()) {
-        track = { id: trackDoc.id, ...trackDoc.data() } as Track;
-      }
-    } catch (err) {
-      console.warn('Failed to fetch track:', err);
+      const tracksSaved = localStorage.getItem('metronome-tracks');
+      const tracks: Track[] = tracksSaved ? JSON.parse(tracksSaved) : [];
+      track = tracks.find((t) => t.id === trackId);
+    } catch {
+      /* ignore */
     }
 
-    const pt: PlaylistTrack = {
-      playlist_id: playlistId,
-      track_id: trackId,
-      position,
-      track: track as Track,
-    };
-
-    const updatedPlaylist = {
-      ...playlist,
-      tracks: [...(playlist.tracks || []), pt],
-    };
-
-    await setDoc(doc(firestoreDb, 'users', user.id, 'playlists', playlistId), updatedPlaylist);
-  }, [user, playlists]);
+    setPlaylists((prev) =>
+      prev.map((p) => {
+        if (p.id !== playlistId) return p;
+        const pt: PlaylistTrack = {
+          playlist_id: playlistId,
+          track_id: trackId,
+          position,
+          track: track,
+        };
+        return { ...p, tracks: [...(p.tracks || []), pt] };
+      })
+    );
+  }, []);
 
   const removeTrackFromPlaylist = useCallback(async (playlistId: string, trackId: string) => {
-    if (!user) return;
-    const playlist = playlists.find((p) => p.id === playlistId);
-    if (!playlist) return;
-
-    const updatedPlaylist = {
-      ...playlist,
-      tracks: (playlist.tracks || []).filter((pt) => pt.track_id !== trackId),
-    };
-
-    await setDoc(doc(firestoreDb, 'users', user.id, 'playlists', playlistId), updatedPlaylist);
-  }, [user, playlists]);
+    setPlaylists((prev) =>
+      prev.map((p) => {
+        if (p.id !== playlistId) return p;
+        return { ...p, tracks: (p.tracks || []).filter((pt) => pt.track_id !== trackId) };
+      })
+    );
+  }, []);
 
   const reorderTracks = useCallback(async (playlistId: string, trackIds: string[]) => {
-    if (!user) return;
-    const playlist = playlists.find((p) => p.id === playlistId);
-    if (!playlist) return;
-
-    const trackMap = new Map((playlist.tracks || []).map((pt) => [pt.track_id, pt]));
-    const updatedPlaylist = {
-      ...playlist,
-      tracks: trackIds.map((id, i) => {
-        const pt = trackMap.get(id)!;
-        return { ...pt, position: i };
-      }),
-    };
-
-    await setDoc(doc(firestoreDb, 'users', user.id, 'playlists', playlistId), updatedPlaylist);
-  }, [user, playlists]);
+    setPlaylists((prev) =>
+      prev.map((p) => {
+        if (p.id !== playlistId) return p;
+        const trackMap = new Map((p.tracks || []).map((pt) => [pt.track_id, pt]));
+        return {
+          ...p,
+          tracks: trackIds.map((id, i) => {
+            const pt = trackMap.get(id)!;
+            return { ...pt, position: i };
+          }),
+        };
+      })
+    );
+  }, []);
 
   return {
-    playlists, loading, fetchPlaylists, createPlaylist, deletePlaylist,
+    playlists, loading, createPlaylist, deletePlaylist,
     addTrackToPlaylist, removeTrackFromPlaylist, reorderTracks,
   };
 }

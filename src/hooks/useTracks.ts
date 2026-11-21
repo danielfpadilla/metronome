@@ -1,68 +1,38 @@
 import { useState, useEffect, useCallback } from 'react';
-import { db as firestoreDb } from '@/lib/firebase';
-import {
-  collection,
-  doc,
-  getDocs,
-  setDoc,
-  deleteDoc,
-  onSnapshot,
-  query,
-  orderBy,
-} from 'firebase/firestore';
-import { useAuth } from './useAuth';
 import type { Track } from '@/types';
 
+const STORAGE_KEY = 'metronome-tracks';
+
+function loadTracks(): Track[] {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveTracks(tracks: Track[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tracks));
+  } catch {
+    /* ignore quota errors */
+  }
+}
+
 export function useTracks() {
-  const { user } = useAuth();
-  const [tracks, setTracks] = useState<Track[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [tracks, setTracks] = useState<Track[]>(loadTracks);
+  const [loading] = useState(false);
 
-  const fetchTracks = useCallback(async () => {
-    if (!user) {
-      setTracks([]);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const tracksRef = collection(firestoreDb, 'users', user.id, 'tracks');
-      const q = query(tracksRef, orderBy('created_at', 'desc'));
-      const snapshot = await getDocs(q);
-      const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Track));
-      setTracks(data);
-    } catch (err) {
-      console.warn('Firestore fetch failed:', err);
-      setTracks([]);
-    }
-    setLoading(false);
-  }, [user]);
-
-  // Real-time listener
+  // Persist to localStorage on change
   useEffect(() => {
-    if (!user) return;
-
-    const tracksRef = collection(firestoreDb, 'users', user.id, 'tracks');
-    const q = query(tracksRef, orderBy('created_at', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Track));
-      setTracks(data);
-    }, (err) => {
-      console.warn('Firestore listener error:', err);
-    });
-
-    return () => unsubscribe();
-  }, [user]);
-
-  useEffect(() => { fetchTracks(); }, [fetchTracks]);
+    saveTracks(tracks);
+  }, [tracks]);
 
   const addYouTubeTrack = useCallback(async (url: string, title: string) => {
-    if (!user) throw new Error('Not authenticated');
-
     const track: Track = {
       id: crypto.randomUUID(),
-      user_id: user.id,
+      user_id: 'local',
       title: title || 'Untitled Track',
       youtube_url: url,
       bpm: null,
@@ -73,24 +43,14 @@ export function useTracks() {
       created_at: new Date().toISOString(),
       status: 'manual_bpm_pending',
     };
-
-    try {
-      await setDoc(doc(firestoreDb, 'users', user.id, 'tracks', track.id), track);
-      // Optimistically add to local state (listener will sync)
-      setTracks((prev) => [track, ...prev]);
-      return track;
-    } catch (err) {
-      console.error('[useTracks] Failed to save track:', err);
-      throw err;
-    }
-  }, [user]);
+    setTracks((prev) => [track, ...prev]);
+    return track;
+  }, []);
 
   const addManualTrack = useCallback(async (title: string, bpm: number) => {
-    if (!user) throw new Error('Not authenticated');
-
     const track: Track = {
       id: crypto.randomUUID(),
-      user_id: user.id,
+      user_id: 'local',
       title: title || 'Untitled Track',
       youtube_url: null,
       bpm,
@@ -101,34 +61,13 @@ export function useTracks() {
       created_at: new Date().toISOString(),
       status: 'ready',
     };
-
-    try {
-      await setDoc(doc(firestoreDb, 'users', user.id, 'tracks', track.id), track);
-      // Optimistically add to local state (listener will sync)
-      setTracks((prev) => [track, ...prev]);
-      return track;
-    } catch (err) {
-      console.error('[useTracks] Failed to save track:', err);
-      throw err;
-    }
-  }, [user]);
+    setTracks((prev) => [track, ...prev]);
+    return track;
+  }, []);
 
   const deleteTrack = useCallback(async (id: string) => {
-    if (!user) return;
-    // Optimistically remove from local state
     setTracks((prev) => prev.filter((t) => t.id !== id));
-    try {
-      await deleteDoc(doc(firestoreDb, 'users', user.id, 'tracks', id));
-    } catch (err) {
-      console.error('[useTracks] Failed to delete track:', err);
-      // Re-fetch on error
-      const tracksRef = collection(firestoreDb, 'users', user.id, 'tracks');
-      const q = query(tracksRef, orderBy('created_at', 'desc'));
-      const snapshot = await getDocs(q);
-      const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Track));
-      setTracks(data);
-    }
-  }, [user]);
+  }, []);
 
-  return { tracks, loading, fetchTracks, addYouTubeTrack, addManualTrack, deleteTrack };
+  return { tracks, loading, addYouTubeTrack, addManualTrack, deleteTrack };
 }
