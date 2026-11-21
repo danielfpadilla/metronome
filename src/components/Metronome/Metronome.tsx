@@ -7,42 +7,23 @@ import { SubdivisionButtons } from './SubdivisionButtons';
 import { PlayBar } from './PlayBar';
 import { BottomToolbar } from './BottomToolbar';
 import { BeatAccentBar } from './BeatAccentBar';
-import { SettingsPanel, type MetronomeSettings } from './SettingsPanel';
+import { SettingsPanel } from './SettingsPanel';
+import { useSettings } from '@/hooks/useSettings';
 import { tapTempoToBpm } from '@/lib/bpmMath';
 import type { TimeSignature } from '@/types';
 
 const TIME_SIGNATURES: TimeSignature[] = ['2/4', '3/4', '4/4', '6/8'];
 
-const DEFAULT_SETTINGS: MetronomeSettings = {
-  countIn: false,
-  pendulum: false,
-  flashAccent: true,
-  flashScreen: false,
-  flashNumbers: false,
-  theme: 'dark',
-  accentLow: 30,
-  accentMid: 60,
-  accentHigh: 100,
-  soundType: 'woodblock',
-  accentPattern: [3, 2, 2, 2],
-};
-
-const STORAGE_KEY = 'metronome-settings';
-
-function loadSettings(): MetronomeSettings {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } : DEFAULT_SETTINGS;
-  } catch {
-    return DEFAULT_SETTINGS;
-  }
-}
-
 export function Metronome() {
-  const [settings, setSettings] = useState<MetronomeSettings>(loadSettings);
+  const { settings, updateSettings } = useSettings();
   const tapTimesRef = useRef<number[]>([]);
   const [showSettings, setShowSettings] = useState(false);
   const location = useLocation();
+
+  // Apply theme
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', settings.theme === 'dark');
+  }, [settings.theme]);
 
   const metro = useMetronome(100, {
     countIn: settings.countIn,
@@ -54,15 +35,6 @@ export function Metronome() {
     soundType: settings.soundType,
     accentPattern: settings.accentPattern,
   });
-
-  // Persist settings
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-    } catch {
-      /* ignore quota errors */
-    }
-  }, [settings]);
 
   const handleTap = useCallback(() => {
     const now = Date.now();
@@ -173,7 +145,7 @@ export function Metronome() {
           <BeatAccentBar
             timeSignature={metro.timeSignature}
             accentPattern={settings.accentPattern}
-            onChange={(pattern) => setSettings((prev) => ({ ...prev, accentPattern: pattern }))}
+            onChange={(pattern) => updateSettings({ accentPattern: pattern })}
             previewSound={metro.previewSound}
             volumes={{
               low: settings.accentLow / 100,
@@ -196,7 +168,7 @@ export function Metronome() {
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
         settings={settings}
-        onChange={(patch) => setSettings((prev) => ({ ...prev, ...patch }))}
+        onChange={(patch) => updateSettings(patch)}
         previewSound={metro.previewSound}
       />
     </div>
