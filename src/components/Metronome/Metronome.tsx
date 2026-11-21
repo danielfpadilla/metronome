@@ -194,16 +194,6 @@ export function Metronome() {
         </div>
       </div>
 
-      {/* Bottom section - playlist player only */}
-      <div className="px-3 py-1.5 border-t border-[var(--line)]">
-        <PlaylistPlayer
-          initialPlaylistId={initialPlaylistId}
-          onBpmChange={metro.setBpm}
-          isPlaying={metro.isPlaying}
-          onTogglePlay={metro.toggle}
-        />
-      </div>
-
       <SettingsPanel
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
