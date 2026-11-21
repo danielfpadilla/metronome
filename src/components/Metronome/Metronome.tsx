@@ -97,7 +97,7 @@ export function Metronome() {
       {/* Top controls */}
       <div className="px-4 py-3 border-b border-[var(--line)]">
         <div className="flex items-center justify-between mb-3">
-          <div className="w-9 h-9 flex items-center justify-center text-[var(--ink-3)]">♪</div>
+          <div className="w-9 h-9" />
           <BpmDisplay
             bpm={metro.bpm}
             flash={flashNumbers}
@@ -105,7 +105,6 @@ export function Metronome() {
             onDecrement={() => metro.setBpm(metro.bpm - 1)}
           />
           <div className="flex gap-1">
-            <div className="w-9 h-9 flex items-center justify-center text-[var(--ink-3)]">♪</div>
             <button
               onClick={() => setShowSettings(true)}
               className="w-9 h-9 flex items-center justify-center text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors"
