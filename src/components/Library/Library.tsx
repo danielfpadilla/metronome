@@ -4,12 +4,15 @@ import { useTracks } from '@/hooks/useTracks';
 import { TrackCard } from './TrackCard';
 import { AddTrackModal } from './AddTrackModal';
 import { EditTrackModal } from './EditTrackModal';
+import { YouTubePlayer } from '@/components/YouTubePlayer';
 import type { Track } from '@/types';
+import { extractVideoId } from '@/utils/youtube';
 
 export function Library() {
   const { tracks, loading, addYouTubeTrack, addManualTrack, deleteTrack, updateTrack } = useTracks();
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingTrack, setEditingTrack] = useState<Track | null>(null);
+  const [playingTrack, setPlayingTrack] = useState<Track | null>(null);
   const [search, setSearch] = useState('');
   const [sourceFilter, setSourceFilter] = useState<'all' | 'youtube' | 'manual'>('all');
   const [bpmRange, setBpmRange] = useState<[number, number]>([0, 240]);
@@ -69,6 +72,7 @@ export function Library() {
             track={track}
             onDelete={() => deleteTrack(track.id)}
             onEdit={() => setEditingTrack(track)}
+            onPlay={track.source === 'youtube' && track.youtube_url ? () => setPlayingTrack(track) : undefined}
             onSelectTrack={(bpm) => navigate(`/?bpm=${bpm}`)}
           />
         ))}
@@ -136,6 +140,30 @@ export function Library() {
         onClose={() => setEditingTrack(null)}
         onSave={(id, updates) => updateTrack(id, updates)}
       />
+
+      {playingTrack && playingTrack.youtube_url && extractVideoId(playingTrack.youtube_url) && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[var(--surface)] rounded-xl p-6 w-full max-w-2xl border border-[var(--line)] max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-[var(--ink)] truncate pr-4">{playingTrack.title}</h2>
+              <button
+                onClick={() => setPlayingTrack(null)}
+                className="text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors text-xl flex-shrink-0"
+                aria-label="Close player"
+              >
+                ✕
+              </button>
+            </div>
+            <YouTubePlayer
+              videoId={extractVideoId(playingTrack.youtube_url)!}
+              onBpmDetected={(bpm) => {
+                updateTrack(playingTrack.id, { bpm, status: 'ready' });
+                setPlayingTrack((prev) => prev ? { ...prev, bpm, status: 'ready' } : null);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

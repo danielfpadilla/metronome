@@ -6,6 +6,7 @@ interface TrackCardProps {
   onClick?: () => void;
   onDelete?: () => void;
   onEdit?: () => void;
+  onPlay?: () => void;
   onSelectTrack?: (bpm: number, timeSignature: string) => void;
 }
 
@@ -19,7 +20,7 @@ const STATUS_META: Record<
   manual_bpm_pending: { label: 'BPM needed', className: 'bg-[var(--surface-2)] text-[var(--ink-3)] border-[var(--line-2)]' },
 };
 
-export function TrackCard({ track, onClick, onDelete, onEdit, onSelectTrack }: TrackCardProps) {
+export function TrackCard({ track, onClick, onDelete, onEdit, onPlay, onSelectTrack }: TrackCardProps) {
   const videoId = track.youtube_url ? extractVideoId(track.youtube_url) : null;
   const coverUrl = videoId ? getThumbnailUrl(videoId) : track.cover_art_url;
   const status = track.status ? STATUS_META[track.status] : null;
@@ -54,6 +55,14 @@ export function TrackCard({ track, onClick, onDelete, onEdit, onSelectTrack }: T
         <div className="text-[var(--accent)] font-bold text-lg ml-2">{hasBpm ? track.bpm : '—'} BPM</div>
       </div>
       <div className="flex gap-2 mt-3 pt-2 border-t border-[var(--line)]">
+        {track.source === 'youtube' && onPlay && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onPlay(); }}
+            className="text-xs text-[var(--accent)] hover:text-[var(--accent)] font-medium transition-colors"
+          >
+            ▶ Play
+          </button>
+        )}
         {onEdit && (
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(); }}
