@@ -2,14 +2,23 @@ import { useState, useCallback, useEffect } from 'react';
 import { usePlaylists } from '@/hooks/usePlaylists';
 
 interface PlaylistPlayerProps {
+  initialPlaylistId?: string | null;
   onBpmChange: (bpm: number) => void;
   isPlaying: boolean;
   onTogglePlay: () => void;
 }
 
-export function PlaylistPlayer({ onBpmChange, isPlaying, onTogglePlay }: PlaylistPlayerProps) {
+export function PlaylistPlayer({ initialPlaylistId, onBpmChange, isPlaying, onTogglePlay }: PlaylistPlayerProps) {
   const { playlists } = usePlaylists();
-  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(initialPlaylistId || null);
+
+  // Sync with initialPlaylistId prop
+  useEffect(() => {
+    if (initialPlaylistId) {
+      setSelectedPlaylistId(initialPlaylistId);
+      setCurrentIndex(0);
+    }
+  }, [initialPlaylistId]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showTrackList, setShowTrackList] = useState(false);
 

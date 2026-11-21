@@ -64,13 +64,23 @@ export function Metronome() {
     if (newBpm !== null) metro.setBpm(newBpm);
   }, [metro]);
 
-  // Apply BPM from ?bpm= URL param (e.g., when a track card sets the tempo)
+  const [initialPlaylistId, setInitialPlaylistId] = useState<string | null>(null);
+
+  // Apply BPM and playlist from URL params
   useEffect(() => {
-    const bpmParam = new URLSearchParams(location.search).get('bpm');
-    if (!bpmParam) return;
-    const bpm = Number(bpmParam);
-    if (!Number.isNaN(bpm)) {
-      metro.setBpm(bpm);
+    const params = new URLSearchParams(location.search);
+    const bpmParam = params.get('bpm');
+    if (bpmParam) {
+      const bpm = Number(bpmParam);
+      if (!Number.isNaN(bpm)) {
+        metro.setBpm(bpm);
+      }
+    }
+    const playlistParam = params.get('playlist');
+    if (playlistParam) {
+      setInitialPlaylistId(playlistParam);
+    }
+    if (bpmParam || playlistParam) {
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, [location.search, metro]);
@@ -187,6 +197,7 @@ export function Metronome() {
       </div>
 
       <PlaylistPlayer
+        initialPlaylistId={initialPlaylistId}
         onBpmChange={metro.setBpm}
         isPlaying={metro.isPlaying}
         onTogglePlay={metro.toggle}

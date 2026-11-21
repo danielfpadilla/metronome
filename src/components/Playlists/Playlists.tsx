@@ -27,7 +27,7 @@ export function Playlists() {
     const firstBpm = firstTrack?.track?.bpm ?? 100;
 
     const handlePlay = () => {
-      navigate(`/?bpm=${firstBpm}`);
+      navigate(`/?bpm=${firstBpm}&playlist=${selected.id}`);
     };
 
     return (
