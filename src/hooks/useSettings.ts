@@ -13,6 +13,7 @@ const DEFAULT_SETTINGS: MetronomeSettings = {
   accentHigh: 100,
   soundType: 'woodblock',
   accentPattern: [3, 2, 2, 2],
+  tapHistory: [],
 };
 
 const STORAGE_KEY = 'metronome-settings';

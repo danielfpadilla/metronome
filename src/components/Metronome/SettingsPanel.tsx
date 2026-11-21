@@ -12,6 +12,7 @@ export interface MetronomeSettings {
   accentHigh: number;
   soundType: 'woodblock' | 'beep' | 'click';
   accentPattern: number[]; // 0=off, 1=low, 2=mid, 3=high per beat
+  tapHistory: number[]; // recent tap-tempo BPM estimates, newest last
 }
 
 interface SettingsPanelProps {
