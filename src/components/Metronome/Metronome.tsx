@@ -171,29 +171,37 @@ export function Metronome() {
             />
           ))}
         </div>
-        {/* Beat accent bar - just below tap wheel */}
-        <div className="w-full max-w-md mt-1">
-          <p className="text-[10px] text-[var(--ink-3)] mb-1 text-center">Beat Accents</p>
-          <BeatAccentBar
-            timeSignature={metro.timeSignature}
-            accentPattern={settings.accentPattern}
-            onChange={(pattern) => updateSettings({ accentPattern: pattern })}
-            previewSound={metro.previewSound}
-            volumes={{
-              low: settings.accentLow / 100,
-              mid: settings.accentMid / 100,
-              high: settings.accentHigh / 100,
-            }}
-          />
+        {/* Beat accents + Subdivision merged section */}
+        <div className="w-full max-w-md mt-1 space-y-2">
+          <div>
+            <p className="text-[10px] text-[var(--ink-3)] mb-1 text-center">Beat Accents</p>
+            <BeatAccentBar
+              timeSignature={metro.timeSignature}
+              accentPattern={settings.accentPattern}
+              onChange={(pattern) => updateSettings({ accentPattern: pattern })}
+              previewSound={metro.previewSound}
+              volumes={{
+                low: settings.accentLow / 100,
+                mid: settings.accentMid / 100,
+                high: settings.accentHigh / 100,
+              }}
+            />
+          </div>
+          <div className="flex items-center gap-2 justify-center">
+            <span className="text-[10px] text-[var(--ink-3)] flex-shrink-0">Subdiv:</span>
+            <SubdivisionButtons value={metro.subdivision} onChange={metro.setSubdivision} />
+          </div>
         </div>
       </div>
 
-      {/* Bottom section - compact */}
+      {/* Bottom section - playlist player only */}
       <div className="px-3 py-1.5 border-t border-[var(--line)]">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-[var(--ink-3)] flex-shrink-0">Subdiv:</span>
-          <SubdivisionButtons value={metro.subdivision} onChange={metro.setSubdivision} />
-        </div>
+        <PlaylistPlayer
+          initialPlaylistId={initialPlaylistId}
+          onBpmChange={metro.setBpm}
+          isPlaying={metro.isPlaying}
+          onTogglePlay={metro.toggle}
+        />
       </div>
 
       <SettingsPanel
