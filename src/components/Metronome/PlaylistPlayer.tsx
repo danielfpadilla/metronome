@@ -17,11 +17,12 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, isPlaying, onTo
 
   // Sync with initialPlaylistId prop
   useEffect(() => {
-    if (initialPlaylistId) {
-      setSelectedPlaylistId(initialPlaylistId);
-      setCurrentIndex(0);
-    }
-  }, [initialPlaylistId]);
+    if (!initialPlaylistId) return;
+    const playlist = playlists.find((p) => p.id === initialPlaylistId);
+    if (!playlist) return;
+    setSelectedPlaylistId(initialPlaylistId);
+    setCurrentIndex(0);
+  }, [initialPlaylistId, playlists]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showTrackList, setShowTrackList] = useState(false);
 
