@@ -187,8 +187,8 @@ export function Metronome() {
               }}
             />
           </div>
-          <div className="flex items-center gap-2 justify-center">
-            <span className="text-[10px] text-[var(--ink-3)] flex-shrink-0">Subdiv:</span>
+          <div>
+            <p className="text-[10px] text-[var(--ink-3)] mb-1 text-center">Subdivision</p>
             <SubdivisionButtons value={metro.subdivision} onChange={metro.setSubdivision} />
           </div>
         </div>
