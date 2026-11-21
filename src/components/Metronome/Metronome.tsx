@@ -101,15 +101,14 @@ export function Metronome() {
 
       {/* Top controls */}
       <div className="px-4 py-3 border-b border-[var(--line)]">
-        <div className="flex items-center justify-between mb-3">
-          <div className="w-14 h-9 flex items-center justify-center text-[var(--ink)] font-bold text-xs">Metronome</div>
+        <div className="flex flex-col items-center mb-3">
+          <div className="h-9 flex items-center justify-center text-[var(--ink)] font-bold text-xs">Metronome</div>
           <BpmDisplay
             bpm={metro.bpm}
             flash={flashNumbers}
             onIncrement={() => metro.setBpm(metro.bpm + 1)}
             onDecrement={() => metro.setBpm(metro.bpm - 1)}
           />
-          <div className="w-14 h-9" />
         </div>
 
         {/* Time signature selector */}
