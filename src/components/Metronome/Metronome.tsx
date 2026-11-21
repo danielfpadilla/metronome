@@ -108,15 +108,7 @@ export function Metronome() {
             onIncrement={() => metro.setBpm(metro.bpm + 1)}
             onDecrement={() => metro.setBpm(metro.bpm - 1)}
           />
-          <div className="flex gap-1">
-            <button
-              onClick={() => setShowSettings(true)}
-              className="w-9 h-9 flex items-center justify-center text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors"
-              aria-label="Settings"
-            >
-              ⚙
-            </button>
-          </div>
+          <div className="w-9 h-9" />
         </div>
 
         {/* Time signature selector */}
