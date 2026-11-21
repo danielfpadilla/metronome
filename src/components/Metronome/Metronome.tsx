@@ -9,7 +9,7 @@ import { BeatAccentBar } from './BeatAccentBar';
 import { SettingsPanel } from './SettingsPanel';
 import { PlaylistPlayer } from './PlaylistPlayer';
 import { useSettings } from '@/hooks/useSettings';
-import { tapTempoToBpm } from '@/lib/bpmMath';
+import { tapTempoToBpm, appendTapHistory } from '@/lib/bpmMath';
 import type { TimeSignature, Subdivision, Track } from '@/types';
 
 const TIME_SIGNATURES: TimeSignature[] = ['2/4', '3/4', '4/4', '6/8'];
@@ -61,8 +61,11 @@ export function Metronome() {
     const now = Date.now();
     tapTimesRef.current = [...tapTimesRef.current, now].slice(-6);
     const newBpm = tapTempoToBpm(tapTimesRef.current);
-    if (newBpm !== null) metro.setBpm(newBpm);
-  }, [metro]);
+    if (newBpm !== null) {
+      metro.setBpm(newBpm);
+      updateSettings((prev) => ({ tapHistory: appendTapHistory(prev.tapHistory, newBpm) }));
+    }
+  }, [metro, updateSettings]);
 
   const applyTrackSettings = useCallback((track: Track) => {
     if (track.timeSignature && TIME_SIGNATURES.includes(track.timeSignature)) {
@@ -133,6 +136,7 @@ export function Metronome() {
           <BpmDisplay
             bpm={metro.bpm}
             flash={flashNumbers}
+            lastTap={settings.tapHistory[settings.tapHistory.length - 1]}
             onIncrement={() => metro.setBpm(metro.bpm + 1)}
             onDecrement={() => metro.setBpm(metro.bpm - 1)}
           />

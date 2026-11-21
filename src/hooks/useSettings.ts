@@ -38,8 +38,8 @@ export function useSettings() {
     }
   }, [settings]);
 
-  const updateSettings = useCallback((patch: Partial<MetronomeSettings>) => {
-    setSettings((prev) => ({ ...prev, ...patch }));
+  const updateSettings = useCallback((patch: Partial<MetronomeSettings> | ((prev: MetronomeSettings) => Partial<MetronomeSettings>)) => {
+    setSettings((prev) => ({ ...prev, ...(typeof patch === 'function' ? patch(prev) : patch) }));
   }, []);
 
   return { settings, loading: false, updateSettings };

@@ -113,6 +113,28 @@ export function SettingsPanel({ isOpen, onClose, settings, onChange, previewSoun
             </div>
           </div>
 
+          {/* Tap history */}
+          <div className="pt-2 border-t border-[#333]">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-white">Tap History</h3>
+              <button
+                onClick={() => onChange({ tapHistory: [] })}
+                className="text-xs text-[var(--ink-3)] hover:text-[var(--danger)] transition-colors"
+              >
+                Clear
+              </button>
+            </div>
+            {settings.tapHistory.length === 0 ? (
+              <p className="text-xs text-[var(--ink-3)]">No taps recorded</p>
+            ) : (
+              <div className="flex flex-wrap gap-1">
+                {settings.tapHistory.slice(-10).map((bpm, i) => (
+                  <span key={i} className="px-2 py-0.5 rounded bg-[var(--surface-2)] text-xs text-[var(--ink-2)] font-mono">{bpm}</span>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Accent volume levels */}
           <div className="pt-2 border-t border-[#333]">
             <h3 className="text-sm font-semibold text-white mb-3">Accent Volumes</h3>
