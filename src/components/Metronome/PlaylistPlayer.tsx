@@ -3,6 +3,8 @@ import { usePlaylists } from '@/hooks/usePlaylists';
 import { useTracks } from '@/hooks/useTracks';
 import type { Track } from '@/types';
 
+const LAST_PLAYLIST_KEY = 'metronome-last-playlist';
+
 interface PlaylistPlayerProps {
   initialPlaylistId?: string | null;
   onBpmChange: (bpm: number) => void;
@@ -14,7 +16,16 @@ interface PlaylistPlayerProps {
 export function PlaylistPlayer({ initialPlaylistId, onBpmChange, onSettingsChange, isPlaying, onTogglePlay }: PlaylistPlayerProps) {
   const { playlists } = usePlaylists();
   const { tracks } = useTracks();
-  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(initialPlaylistId || null);
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(
+    () => initialPlaylistId || localStorage.getItem(LAST_PLAYLIST_KEY)
+  );
+
+  // Remember last loaded playlist across reloads
+  useEffect(() => {
+    if (selectedPlaylistId) {
+      try { localStorage.setItem(LAST_PLAYLIST_KEY, selectedPlaylistId); } catch { /* ignore */ }
+    }
+  }, [selectedPlaylistId]);
 
   // Sync with initialPlaylistId prop
   useEffect(() => {
@@ -62,6 +73,7 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, onSettingsChang
 
   const clearPlaylist = useCallback(() => {
     setSelectedPlaylistId(null);
+    try { localStorage.removeItem(LAST_PLAYLIST_KEY); } catch { /* ignore */ }
     setCurrentIndex(0);
     setShowTrackList(false);
   }, []);
