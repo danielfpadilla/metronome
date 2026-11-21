@@ -104,7 +104,16 @@ export function Metronome() {
             onIncrement={() => metro.setBpm(metro.bpm + 1)}
             onDecrement={() => metro.setBpm(metro.bpm - 1)}
           />
-          <div className="w-9 h-9" />
+          <div className="flex gap-1">
+            <div className="w-9 h-9 flex items-center justify-center text-[var(--ink-3)]">♪</div>
+            <button
+              onClick={() => setShowSettings(true)}
+              className="w-9 h-9 flex items-center justify-center text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors"
+              aria-label="Settings"
+            >
+              ⚙
+            </button>
+          </div>
         </div>
 
         {/* Time signature selector */}
@@ -136,27 +145,17 @@ export function Metronome() {
 
       {/* Tap wheel + visual beat indicator */}
       <div className="flex-1 flex flex-col items-center justify-center p-2 min-h-0 gap-2">
-        <div className="relative">
-          {settings.pendulum ? (
-            <div className="pendulum">
-              <div
-                className="pendulum-rod"
-                style={{ animationDuration: `${2 * (60 / metro.bpm)}s` }}
-              />
-              <div className="pendulum-weight" />
-            </div>
-          ) : (
-            <TapWheel onTap={handleTap} onRotate={(delta) => { const newBpm = Math.max(40, Math.min(240, bpmRef.current + delta)); bpmRef.current = newBpm; metro.setBpm(newBpm); }} size={wheelSize} />
-          )}
-          {/* Settings - upper right of tap wheel */}
-          <button
-            onClick={() => setShowSettings(true)}
-            className="absolute top-2 right-2 w-9 h-9 flex items-center justify-center rounded text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors z-10"
-            aria-label="Settings"
-          >
-            ⚙
-          </button>
-        </div>
+        {settings.pendulum ? (
+          <div className="pendulum">
+            <div
+              className="pendulum-rod"
+              style={{ animationDuration: `${2 * (60 / metro.bpm)}s` }}
+            />
+            <div className="pendulum-weight" />
+          </div>
+        ) : (
+          <TapWheel onTap={handleTap} onRotate={(delta) => { const newBpm = Math.max(40, Math.min(240, bpmRef.current + delta)); bpmRef.current = newBpm; metro.setBpm(newBpm); }} size={wheelSize} />
+        )}
         {/* Visual beat indicator */}
         <div className="flex gap-2">
           {Array.from({ length: parseInt(metro.timeSignature.split('/')[0]) }).map((_, i) => (
