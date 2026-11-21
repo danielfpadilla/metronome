@@ -31,7 +31,15 @@ export function AddTrackModal({ isOpen, onClose, onAddYouTube, onAddManual }: Ad
       await onAddYouTube(url, title || 'Untitled Track');
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add track');
+      const msg = err instanceof Error ? err.message : 'Failed to add track';
+      // Provide more helpful error messages
+      if (msg.includes('permission-denied') || msg.includes('Missing or insufficient permissions')) {
+        setError('Permission denied. Make sure Firestore security rules are deployed and you are signed in.');
+      } else if (msg.includes('not-authenticated') || msg.includes('Not authenticated')) {
+        setError('Please sign in first to add tracks.');
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -45,7 +53,15 @@ export function AddTrackModal({ isOpen, onClose, onAddYouTube, onAddManual }: Ad
       await onAddManual(title || 'Untitled Track', bpm);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add track');
+      const msg = err instanceof Error ? err.message : 'Failed to add track';
+      // Provide more helpful error messages
+      if (msg.includes('permission-denied') || msg.includes('Missing or insufficient permissions')) {
+        setError('Permission denied. Make sure Firestore security rules are deployed and you are signed in.');
+      } else if (msg.includes('not-authenticated') || msg.includes('Not authenticated')) {
+        setError('Please sign in first to add tracks.');
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
