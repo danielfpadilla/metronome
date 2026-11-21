@@ -76,12 +76,8 @@ export function useTracks() {
 
     try {
       await setDoc(doc(firestoreDb, 'users', user.id, 'tracks', track.id), track);
-      // Refresh tracks list
-      const tracksRef = collection(firestoreDb, 'users', user.id, 'tracks');
-      const q = query(tracksRef, orderBy('created_at', 'desc'));
-      const snapshot = await getDocs(q);
-      const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Track));
-      setTracks(data);
+      // Optimistically add to local state (listener will sync)
+      setTracks((prev) => [track, ...prev]);
       return track;
     } catch (err) {
       console.error('[useTracks] Failed to save track:', err);
@@ -108,12 +104,8 @@ export function useTracks() {
 
     try {
       await setDoc(doc(firestoreDb, 'users', user.id, 'tracks', track.id), track);
-      // Refresh tracks list
-      const tracksRef = collection(firestoreDb, 'users', user.id, 'tracks');
-      const q = query(tracksRef, orderBy('created_at', 'desc'));
-      const snapshot = await getDocs(q);
-      const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Track));
-      setTracks(data);
+      // Optimistically add to local state (listener will sync)
+      setTracks((prev) => [track, ...prev]);
       return track;
     } catch (err) {
       console.error('[useTracks] Failed to save track:', err);
@@ -123,13 +115,19 @@ export function useTracks() {
 
   const deleteTrack = useCallback(async (id: string) => {
     if (!user) return;
-    await deleteDoc(doc(firestoreDb, 'users', user.id, 'tracks', id));
-    // Refresh tracks list
-    const tracksRef = collection(firestoreDb, 'users', user.id, 'tracks');
-    const q = query(tracksRef, orderBy('created_at', 'desc'));
-    const snapshot = await getDocs(q);
-    const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Track));
-    setTracks(data);
+    // Optimistically remove from local state
+    setTracks((prev) => prev.filter((t) => t.id !== id));
+    try {
+      await deleteDoc(doc(firestoreDb, 'users', user.id, 'tracks', id));
+    } catch (err) {
+      console.error('[useTracks] Failed to delete track:', err);
+      // Re-fetch on error
+      const tracksRef = collection(firestoreDb, 'users', user.id, 'tracks');
+      const q = query(tracksRef, orderBy('created_at', 'desc'));
+      const snapshot = await getDocs(q);
+      const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Track));
+      setTracks(data);
+    }
   }, [user]);
 
   return { tracks, loading, fetchTracks, addYouTubeTrack, addManualTrack, deleteTrack };
