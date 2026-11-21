@@ -2,7 +2,7 @@
 
 A precision metronome web app for musicians — set tempo, practice with subdivisions, build track playlists, and detect BPM from YouTube videos. Pure frontend, works offline, no backend required.
 
-### Screenshots
+## 📸 Screenshots
 
 | Desktop | Mobile |
 |---------|--------|
@@ -22,7 +22,7 @@ A precision metronome web app for musicians — set tempo, practice with subdivi
 - **Sound types** — Woodblock, Beep, Click (with volume preview)
 - **Visual modes** — Pendulum, flash screen, flash numbers, count-in
 - **Themes** — Dark and light mode
-- **Tap-tempo history** — Recent tap BPM estimates, shown in BPM display and Settings (clearable)
+- **Tap-tempo history** — Latest tap estimate in BPM display; recent history in Settings (clearable)
 
 ### Track Library
 - **Add tracks** — YouTube URL or manual BPM entry
@@ -97,7 +97,8 @@ metronome/
 │   └── utils/               # youtube
 ├── tests/
 │   ├── unit/                # Unit tests
-│   └── components/          # Component tests
+│   ├── components/          # Component tests
+│   └── hooks/               # Hook tests (useSettings)
 ├── screenshots/             # UI screenshots for docs
 ├── docs/                    # Specs and implementation plans
 ├── public/                  # Static assets, PWA manifest, service worker
