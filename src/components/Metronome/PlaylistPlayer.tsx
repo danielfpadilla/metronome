@@ -65,7 +65,42 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, isPlaying, onTo
   }, []);
 
   if (!selectedPlaylist) {
-    return null;
+    // Show selector when no playlist is loaded
+    if (playlists.length === 0) {
+      return (
+        <div className="px-3 py-2 border-t border-[var(--line)] text-center">
+          <p className="text-xs text-[var(--ink-3)]">
+            No playlists yet. Create one in the{' '}
+            <a href="/playlists" className="text-[var(--accent)] hover:underline">Playlists</a> page.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="mt-2 bg-[var(--surface-2)] border border-[var(--line)] rounded-lg overflow-hidden">
+        <div className="flex items-center gap-2 px-3 py-2">
+          <span className="text-[var(--ink-3)] text-xs">♫</span>
+          <select
+            value=""
+            onChange={(e) => {
+              if (e.target.value) {
+                setSelectedPlaylistId(e.target.value);
+                setCurrentIndex(0);
+              }
+            }}
+            className="flex-1 min-w-0 px-2 py-1.5 bg-[var(--base)] border border-[var(--line)] rounded text-[var(--ink)] text-xs focus:outline-none focus:border-[var(--accent)] transition-colors"
+          >
+            <option value="">Select a playlist...</option>
+            {playlists.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name} ({p.tracks?.length ?? 0} tracks)
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    );
   }
 
   return (
