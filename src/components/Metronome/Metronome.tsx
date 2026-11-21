@@ -5,7 +5,6 @@ import { TapWheel } from './TapWheel';
 import { BpmDisplay } from './BpmDisplay';
 import { SubdivisionButtons } from './SubdivisionButtons';
 import { PlayBar } from './PlayBar';
-import { BottomToolbar } from './BottomToolbar';
 import { BeatAccentBar } from './BeatAccentBar';
 import { SettingsPanel } from './SettingsPanel';
 import { PlaylistPlayer } from './PlaylistPlayer';
@@ -85,13 +84,7 @@ export function Metronome() {
     }
   }, [location.search, metro]);
 
-  // Elapsed time display
-  const elapsedSeconds = metro.currentBeat * (60 / metro.bpm);
-  const minutes = Math.floor(elapsedSeconds / 60);
-  const seconds = Math.floor(elapsedSeconds % 60);
-  const timeDisplay = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  const countInActive = metro.countInBeat !== null;
-  const displayTime = countInActive ? `Count-in ${metro.countInBeat}` : timeDisplay;
+  // Elapsed time display (kept for future use)
 
   const flashScreenActive = settings.flashScreen && metro.isPlaying && metro.currentBeat === 0;
   const flashNumbers = settings.flashNumbers && metro.isPlaying && metro.currentBeat === 0;
@@ -193,7 +186,6 @@ export function Metronome() {
           <p className="text-[10px] text-[var(--ink-3)] mb-1 text-center">Subdivision</p>
           <SubdivisionButtons value={metro.subdivision} onChange={metro.setSubdivision} />
         </div>
-        <BottomToolbar timeDisplay={displayTime} isPlaying={metro.isPlaying} onToggle={metro.toggle} />
       </div>
 
       <PlaylistPlayer

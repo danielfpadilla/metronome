@@ -1,4 +1,4 @@
-import { BottomNav } from './BottomNav';
+import { BurgerMenu } from './BurgerMenu';
 import { Link } from 'react-router-dom';
 import { useEffect } from 'react';
 
@@ -46,7 +46,7 @@ export function AppShell({ children }: AppShellProps) {
         {children}
       </main>
 
-      <BottomNav />
+      <BurgerMenu />
     </div>
   );
 }
