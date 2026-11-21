@@ -28,6 +28,7 @@ export function AppShell({ children }: AppShellProps) {
             { path: '/', label: 'Metronome', icon: '♪' },
             { path: '/library', label: 'Library', icon: '☰' },
             { path: '/playlists', label: 'Playlists', icon: '♫' },
+            { path: '/?settings=1', label: 'Settings', icon: '⚙' },
           ].map((item) => (
             <Link
               key={item.path}
