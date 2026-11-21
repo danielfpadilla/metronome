@@ -2,9 +2,17 @@
 
 A precision metronome web app for musicians — set tempo, practice with subdivisions, build track playlists, and detect BPM from YouTube videos. Pure frontend, works offline, no backend required.
 
-![Metronome Screenshot](https://via.placeholder.com/800x400?text=Metronome+App)
-
 ## ✨ Features
+
+### Screenshots
+
+| Desktop | Mobile |
+|---------|--------|
+| ![Metronome Desktop](screenshots/metronome-desktop.jpg) | ![Metronome Mobile](screenshots/metronome-mobile.jpg) |
+
+| Library | Playlists |
+|---------|-----------|
+| ![Library Mobile](screenshots/library-mobile.jpg) | ![Playlists Mobile](screenshots/playlists-mobile.jpg) |
 
 ### Metronome
 - **Adjustable BPM** — Tap the dial or use +/- buttons (40–240 BPM)
