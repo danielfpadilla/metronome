@@ -11,9 +11,10 @@ interface PlaylistPlayerProps {
   onSettingsChange?: (track: Track) => void;
   isPlaying: boolean;
   onTogglePlay: () => void;
+  onClearPlaylist?: () => void;
 }
 
-export function PlaylistPlayer({ initialPlaylistId, onBpmChange, onSettingsChange, isPlaying, onTogglePlay }: PlaylistPlayerProps) {
+export function PlaylistPlayer({ initialPlaylistId, onBpmChange, onSettingsChange, isPlaying, onTogglePlay, onClearPlaylist }: PlaylistPlayerProps) {
   const { playlists } = usePlaylists();
   const { tracks } = useTracks();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -67,6 +68,7 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, onSettingsChang
     try { localStorage.removeItem(LAST_PLAYLIST_KEY); } catch { /* ignore */ }
     setCurrentIndex(0);
     setShowTrackList(false);
+    onClearPlaylist?.();
   };
 
   if (!selectedPlaylist) {

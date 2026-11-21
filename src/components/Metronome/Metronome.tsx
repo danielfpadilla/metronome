@@ -19,7 +19,9 @@ export function Metronome() {
   const tapTimesRef = useRef<number[]>([]);
   const location = useLocation();
   const navigate = useNavigate();
-  const [showSettings, setShowSettings] = useState(() => new URLSearchParams(location.search).has('settings'));
+  const urlParams = new URLSearchParams(location.search);
+  const showSettings = urlParams.has('settings');
+  const initialPlaylistId = urlParams.get('playlist');
 
   // Apply theme
   useEffect(() => {
@@ -85,9 +87,14 @@ export function Metronome() {
     }
   }, [setTimeSignature, setSubdivision, currentTs, updateSettings]);
 
-  const [initialPlaylistId] = useState<string | null>(() => new URLSearchParams(location.search).get('playlist'));
+  const removeParam = (key: string) => {
+    const next = new URLSearchParams(location.search);
+    next.delete(key);
+    const query = next.toString();
+    navigate(query ? `${location.pathname}?${query}` : location.pathname, { replace: true });
+  };
 
-  // Apply BPM, playlist and per-track settings from URL params
+  // Apply BPM and per-track settings from URL params
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const bpmParam = params.get('bpm');
@@ -113,12 +120,15 @@ export function Metronome() {
         updateSettings({ accentPattern: pattern });
       }
     }
-    const playlistParam = params.get('playlist');
-    const settingsParam = params.get('settings');
-    if (bpmParam || tsParam || subParam || accentsParam || playlistParam || settingsParam) {
-      navigate(window.location.pathname, { replace: true });
+    if (bpmParam || tsParam || subParam || accentsParam) {
+      params.delete('bpm');
+      params.delete('ts');
+      params.delete('sub');
+      params.delete('accents');
+      const query = params.toString();
+      navigate(query ? `${location.pathname}?${query}` : location.pathname, { replace: true });
     }
-  }, [location.search, metro, updateSettings, navigate]);
+  }, [location.search, location.pathname, metro, updateSettings, navigate]);
 
   // Elapsed time display (kept for future use)
 
@@ -163,11 +173,13 @@ export function Metronome() {
 
         {/* Playlist selector - below play button */}
         <PlaylistPlayer
+          key={initialPlaylistId ?? 'none'}
           initialPlaylistId={initialPlaylistId}
           onBpmChange={metro.setBpm}
           onSettingsChange={applyTrackSettings}
           isPlaying={metro.isPlaying}
           onTogglePlay={metro.toggle}
+          onClearPlaylist={() => removeParam('playlist')}
         />
       </div>
 
@@ -224,7 +236,7 @@ export function Metronome() {
 
       <SettingsPanel
         isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
+        onClose={() => removeParam('settings')}
         settings={settings}
         onChange={(patch) => updateSettings(patch)}
         previewSound={metro.previewSound}
