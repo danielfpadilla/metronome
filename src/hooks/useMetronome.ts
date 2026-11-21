@@ -56,9 +56,9 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
     setBpmState(Math.max(40, Math.min(240, Math.round(v))));
   }, []);
 
-  const playWoodblock = useCallback((ctx: AudioContext, time: number, volume: number) => {
+  const playWoodblock = useCallback((ctx: AudioContext, time: number, volume: number, freqMultiplier: number = 1) => {
     const gainVal = Math.max(0.001, volume);
-    const freq = 1000;
+    const freq = 1000 * freqMultiplier;
 
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -93,11 +93,11 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
     noise.stop(time + 0.02);
   }, []);
 
-  const playBeep = useCallback((ctx: AudioContext, time: number, volume: number) => {
+  const playBeep = useCallback((ctx: AudioContext, time: number, volume: number, freqMultiplier: number = 1) => {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.value = 900;
+    osc.frequency.value = 900 * freqMultiplier;
     gain.gain.setValueAtTime(Math.max(0.001, volume), time);
     gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
     osc.connect(gain);
@@ -106,11 +106,11 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
     osc.stop(time + 0.05);
   }, []);
 
-  const playClickSound = useCallback((ctx: AudioContext, time: number, volume: number) => {
+  const playClickSound = useCallback((ctx: AudioContext, time: number, volume: number, freqMultiplier: number = 1) => {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'square';
-    osc.frequency.value = 1200;
+    osc.frequency.value = 1200 * freqMultiplier;
     gain.gain.setValueAtTime(Math.max(0.001, volume), time);
     gain.gain.exponentialRampToValueAtTime(0.001, time + 0.03);
     osc.connect(gain);
@@ -123,15 +123,19 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
     if (level === 0) return; // silent
 
     let volume: number;
+    let freqMultiplier: number;
     switch (level) {
-      case 1: // low
+      case 1: // low - low pitch
         volume = volumes.low;
+        freqMultiplier = 0.7;
         break;
-      case 2: // mid
+      case 2: // mid - normal pitch
         volume = volumes.mid;
+        freqMultiplier = 1.0;
         break;
-      case 3: // high
+      case 3: // high - higher pitch
         volume = volumes.high;
+        freqMultiplier = 1.4;
         break;
       default:
         return;
@@ -139,16 +143,16 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
 
     switch (soundType) {
       case 'woodblock':
-        playWoodblock(ctx, time, volume);
+        playWoodblock(ctx, time, volume, freqMultiplier);
         break;
       case 'beep':
-        playBeep(ctx, time, volume);
+        playBeep(ctx, time, volume, freqMultiplier);
         break;
       case 'click':
-        playClickSound(ctx, time, volume);
+        playClickSound(ctx, time, volume, freqMultiplier);
         break;
       default:
-        playWoodblock(ctx, time, volume);
+        playWoodblock(ctx, time, volume, freqMultiplier);
     }
   }, [playWoodblock, playBeep, playClickSound]);
 
