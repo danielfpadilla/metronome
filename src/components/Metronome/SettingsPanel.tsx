@@ -119,7 +119,8 @@ export function SettingsPanel({ isOpen, onClose, settings, onChange, previewSoun
               <h3 className="text-sm font-semibold text-white">Tap History</h3>
               <button
                 onClick={() => onChange({ tapHistory: [] })}
-                className="text-xs text-[var(--ink-3)] hover:text-[var(--danger)] transition-colors"
+                disabled={settings.tapHistory.length === 0}
+                className="text-xs text-[var(--ink-3)] hover:text-[var(--danger)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:text-[var(--ink-3)]"
               >
                 Clear
               </button>
@@ -128,7 +129,7 @@ export function SettingsPanel({ isOpen, onClose, settings, onChange, previewSoun
               <p className="text-xs text-[var(--ink-3)]">No taps recorded</p>
             ) : (
               <div className="flex flex-wrap gap-1">
-                {settings.tapHistory.slice(-10).map((bpm, i) => (
+                {settings.tapHistory.map((bpm, i) => (
                   <span key={i} className="px-2 py-0.5 rounded bg-[var(--surface-2)] text-xs text-[var(--ink-2)] font-mono">{bpm}</span>
                 ))}
               </div>
