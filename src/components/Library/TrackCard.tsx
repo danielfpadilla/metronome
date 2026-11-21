@@ -5,6 +5,7 @@ interface TrackCardProps {
   track: Track;
   onClick?: () => void;
   onDelete?: () => void;
+  onEdit?: () => void;
   onSelectTrack?: (bpm: number, timeSignature: string) => void;
 }
 
@@ -12,13 +13,13 @@ const STATUS_META: Record<
   NonNullable<Track['status']>,
   { label: string; className: string }
 > = {
-  processing: { label: 'Analyzing…', className: 'bg-[#2a2a1a] text-[#e0c66a] border-[#4a4a2a]' },
-  ready: { label: 'Ready', className: 'bg-[#122a24] text-[#00e0c6] border-[#1d4a3f]' },
-  failed: { label: 'Failed', className: 'bg-[#2a1414] text-[#f87171] border-[#4a2020]' },
-  manual_bpm_pending: { label: 'BPM needed', className: 'bg-[#22222a] text-[#aaa] border-[#3a3a44]' },
+  processing: { label: 'Analyzing…', className: 'bg-[var(--surface-2)] text-[#e0c66a] border-[var(--line-2)]' },
+  ready: { label: 'Ready', className: 'bg-[var(--surface-2)] text-[var(--accent)] border-[var(--line-2)]' },
+  failed: { label: 'Failed', className: 'bg-[var(--surface-2)] text-[var(--danger)] border-[var(--line-2)]' },
+  manual_bpm_pending: { label: 'BPM needed', className: 'bg-[var(--surface-2)] text-[var(--ink-3)] border-[var(--line-2)]' },
 };
 
-export function TrackCard({ track, onClick, onDelete, onSelectTrack }: TrackCardProps) {
+export function TrackCard({ track, onClick, onDelete, onEdit, onSelectTrack }: TrackCardProps) {
   const videoId = track.youtube_url ? extractVideoId(track.youtube_url) : null;
   const coverUrl = videoId ? getThumbnailUrl(videoId) : track.cover_art_url;
   const status = track.status ? STATUS_META[track.status] : null;
@@ -27,13 +28,13 @@ export function TrackCard({ track, onClick, onDelete, onSelectTrack }: TrackCard
   return (
     <div
       onClick={onClick}
-      className="bg-[#1a1a24] border border-[#333] rounded-xl p-4 cursor-pointer hover:border-[#00e0c6] hover:shadow-[0_0_12px_rgba(0,224,198,0.15)] transition-all"
+      className="bg-[var(--surface)] border border-[var(--line)] rounded-xl p-4 cursor-pointer hover:border-[var(--accent)] hover:shadow-[0_0_12px_var(--accent-glow)] transition-all group"
     >
-      <div className="relative w-full h-32 bg-[#0f0f14] rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+      <div className="relative w-full h-32 bg-[var(--base)] rounded-lg mb-3 flex items-center justify-center overflow-hidden">
         {coverUrl ? (
           <img src={coverUrl} alt={track.title} className="w-full h-full object-cover" />
         ) : (
-          <span className="text-[#555] text-sm">No cover</span>
+          <span className="text-[var(--ink-3)] text-sm">No cover</span>
         )}
         {status && (
           <span
@@ -45,31 +46,41 @@ export function TrackCard({ track, onClick, onDelete, onSelectTrack }: TrackCard
       </div>
       <div className="flex justify-between items-start">
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-white truncate">{track.title}</h3>
-          <p className="text-xs text-[#888] mt-1">
+          <h3 className="font-semibold text-[var(--ink)] truncate">{track.title}</h3>
+          <p className="text-xs text-[var(--ink-3)] mt-1">
             {track.source === 'youtube' ? 'YouTube' : 'Manual'} · {track.duration_seconds ? `${Math.floor(track.duration_seconds / 60)}:${String(track.duration_seconds % 60).padStart(2, '0')}` : '--:--'}
           </p>
         </div>
-        <div className="text-[#00e0c6] font-bold text-lg ml-2">{hasBpm ? track.bpm : '—'} BPM</div>
+        <div className="text-[var(--accent)] font-bold text-lg ml-2">{hasBpm ? track.bpm : '—'} BPM</div>
       </div>
-      {onDelete && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          className="mt-2 text-xs text-red-400 hover:text-red-300"
-        >
-          Delete
-        </button>
-      )}
-      {onSelectTrack && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onSelectTrack(track.bpm ?? 100, '4/4'); }}
-          disabled={!hasBpm}
-          className="mt-2 text-xs text-[#00e0c6] hover:text-[#00b8a3] disabled:text-[#555] disabled:cursor-not-allowed"
-          title={hasBpm ? 'Set metronome tempo' : 'BPM not available yet'}
-        >
-          Set BPM
-        </button>
-      )}
+      <div className="flex gap-2 mt-3 pt-2 border-t border-[var(--line)]">
+        {onEdit && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            className="text-xs text-[var(--ink-2)] hover:text-[var(--accent)] transition-colors"
+          >
+            Edit
+          </button>
+        )}
+        {onSelectTrack && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onSelectTrack(track.bpm ?? 100, '4/4'); }}
+            disabled={!hasBpm}
+            className="text-xs text-[var(--accent)] hover:text-[var(--accent)] disabled:text-[var(--ink-3)] disabled:cursor-not-allowed transition-colors"
+            title={hasBpm ? 'Set metronome tempo' : 'BPM not available yet'}
+          >
+            Set BPM
+          </button>
+        )}
+        {onDelete && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            className="text-xs text-[var(--danger)] hover:text-red-300 transition-colors ml-auto"
+          >
+            Delete
+          </button>
+        )}
+      </div>
     </div>
   );
 }

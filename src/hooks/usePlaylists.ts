@@ -95,8 +95,14 @@ export function usePlaylists() {
     );
   }, []);
 
+  const renamePlaylist = useCallback(async (id: string, name: string) => {
+    setPlaylists((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, name } : p))
+    );
+  }, []);
+
   return {
-    playlists, loading, createPlaylist, deletePlaylist,
+    playlists, loading, createPlaylist, deletePlaylist, renamePlaylist,
     addTrackToPlaylist, removeTrackFromPlaylist, reorderTracks,
   };
 }

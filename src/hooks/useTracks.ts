@@ -69,5 +69,11 @@ export function useTracks() {
     setTracks((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  return { tracks, loading, addYouTubeTrack, addManualTrack, deleteTrack };
+  const updateTrack = useCallback(async (id: string, updates: Partial<Track>) => {
+    setTracks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
+    );
+  }, []);
+
+  return { tracks, loading, addYouTubeTrack, addManualTrack, deleteTrack, updateTrack };
 }

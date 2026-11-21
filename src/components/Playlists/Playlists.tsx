@@ -6,7 +6,7 @@ import { PlaylistEditor } from './PlaylistEditor';
 import { useNavigate } from 'react-router-dom';
 
 export function Playlists() {
-  const { playlists, loading, createPlaylist, deletePlaylist, addTrackToPlaylist, removeTrackFromPlaylist, reorderTracks } = usePlaylists();
+  const { playlists, loading, createPlaylist, deletePlaylist, renamePlaylist, addTrackToPlaylist, removeTrackFromPlaylist, reorderTracks } = usePlaylists();
   const { tracks } = useTracks();
   const navigate = useNavigate();
   const [showCreate, setShowCreate] = useState(false);
@@ -117,6 +117,7 @@ export function Playlists() {
               playlist={playlist}
               onClick={() => setSelectedPlaylist(playlist.id)}
               onDelete={() => deletePlaylist(playlist.id)}
+              onRename={(name) => renamePlaylist(playlist.id, name)}
             />
           ))}
         </div>
