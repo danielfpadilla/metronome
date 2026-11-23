@@ -7,8 +7,10 @@ import { SubdivisionButtons } from './SubdivisionButtons';
 import { PlayBar } from './PlayBar';
 import { BeatAccentBar } from './BeatAccentBar';
 import { SettingsPanel } from './SettingsPanel';
+import { SaveTrackModal, type TrackSettings } from './SaveTrackModal';
 import { PlaylistPlayer } from './PlaylistPlayer';
 import { useSettings } from '@/hooks/useSettings';
+import { useTracks } from '@/hooks/useTracks';
 import { tapTempoToBpm, appendTapHistory } from '@/lib/bpmMath';
 import type { TimeSignature, Subdivision, Track } from '@/types';
 
@@ -22,6 +24,12 @@ export function Metronome() {
   const urlParams = new URLSearchParams(location.search);
   const showSettings = urlParams.get('settings') === '1';
   const initialPlaylistId = urlParams.get('playlist');
+  const { addManualTrack } = useTracks();
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [savedMessage, setSavedMessage] = useState(false);
+  const [playlistLoaded, setPlaylistLoaded] = useState(
+    () => !!(initialPlaylistId || localStorage.getItem('metronome-last-playlist'))
+  );
 
   // Apply theme
   useEffect(() => {
@@ -135,6 +143,14 @@ export function Metronome() {
   const flashScreenActive = settings.flashScreen && metro.isPlaying && metro.currentBeat === 0;
   const flashNumbers = settings.flashNumbers && metro.isPlaying && metro.currentBeat === 0;
 
+  const handleSaveTrack = useCallback((title: string, trackSettings: TrackSettings) => {
+    return addManualTrack(title, metro.bpm, trackSettings).then(() => {
+      setShowSaveModal(false);
+      setSavedMessage(true);
+      window.setTimeout(() => setSavedMessage(false), 2000);
+    });
+  }, [addManualTrack, metro.bpm]);
+
   return (
     <div className="relative flex flex-col h-full bg-[var(--base)]">
       {/* Fullscreen accent flash */}
@@ -168,8 +184,23 @@ export function Metronome() {
         </div>
 
         <div className="flex items-center justify-center gap-2">
-          <PlayBar isPlaying={metro.isPlaying} onToggle={metro.toggle} />
+          <div className="w-full max-w-xs">
+            <PlayBar isPlaying={metro.isPlaying} onToggle={metro.toggle} />
+          </div>
+          {!playlistLoaded && (
+            <button
+              onClick={() => setShowSaveModal(true)}
+              disabled={showSaveModal}
+              className="h-10 px-3 rounded-lg border border-[var(--line)] bg-[var(--surface)] text-[var(--ink)] text-sm hover:border-[var(--accent)] disabled:opacity-50 transition-colors"
+              aria-label="Save current tempo as track"
+            >
+              Save
+            </button>
+          )}
         </div>
+        {savedMessage && (
+          <p role="status" className="text-center text-xs text-[var(--accent)] mt-2">Saved to Library</p>
+        )}
 
         {/* Playlist selector - below play button */}
         <PlaylistPlayer
@@ -179,6 +210,7 @@ export function Metronome() {
           isPlaying={metro.isPlaying}
           onTogglePlay={metro.toggle}
           onClearPlaylist={() => removeParam('playlist')}
+          onLoadedChange={setPlaylistLoaded}
         />
       </div>
 
@@ -240,6 +272,17 @@ export function Metronome() {
         onChange={(patch) => updateSettings(patch)}
         previewSound={metro.previewSound}
       />
+
+      {showSaveModal && (
+        <SaveTrackModal
+          bpm={metro.bpm}
+          timeSignature={metro.timeSignature}
+          subdivision={metro.subdivision}
+          accentPattern={settings.accentPattern}
+          onClose={() => setShowSaveModal(false)}
+          onSave={handleSaveTrack}
+        />
+      )}
     </div>
   );
 }

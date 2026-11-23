@@ -12,9 +12,10 @@ interface PlaylistPlayerProps {
   isPlaying: boolean;
   onTogglePlay: () => void;
   onClearPlaylist?: () => void;
+  onLoadedChange?: (loaded: boolean) => void;
 }
 
-export function PlaylistPlayer({ initialPlaylistId, onBpmChange, onSettingsChange, isPlaying, onTogglePlay, onClearPlaylist }: PlaylistPlayerProps) {
+export function PlaylistPlayer({ initialPlaylistId, onBpmChange, onSettingsChange, isPlaying, onTogglePlay, onClearPlaylist, onLoadedChange }: PlaylistPlayerProps) {
   const { playlists } = usePlaylists();
   const { tracks } = useTracks();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -48,6 +49,11 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, onSettingsChang
   }, [selectedPlaylistId]);
 
   const selectedPlaylist = playlists.find((p) => p.id === selectedPlaylistId) || null;
+
+  useEffect(() => {
+    onLoadedChange?.(!!selectedPlaylist);
+  }, [selectedPlaylist, onLoadedChange]);
+
   const playlistTracks = selectedPlaylist?.tracks || [];
 
   const getTrack = useCallback((trackId: string): Track | undefined => {

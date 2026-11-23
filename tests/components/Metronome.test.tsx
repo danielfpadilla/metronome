@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Link, MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { Metronome } from '@/components/Metronome/Metronome';
@@ -172,5 +172,31 @@ describe('Metronome', () => {
     expect(screen.getByLabelText('Close playlist')).toBeInTheDocument();
     expect(screen.getByText('2/2')).toBeInTheDocument();
     expect(screen.getByText('Second track')).toBeInTheDocument();
+  });
+
+  it('saves current tempo as a track and shows confirmation', async () => {
+    const user = userEvent.setup();
+    renderHarness();
+
+    const saveButton = screen.getByRole('button', { name: 'Save current tempo as track' });
+    await user.click(saveButton);
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toBeInTheDocument();
+    expect(saveButton).toBeDisabled();
+
+    const input = within(dialog).getByRole('textbox');
+    await user.clear(input);
+    await user.type(input, 'Practice 100');
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Saved to Library'));
+    const tracks = JSON.parse(localStorage.getItem('metronome-tracks') ?? '[]');
+    expect(tracks[0]).toMatchObject({ title: 'Practice 100', bpm: 100, source: 'manual' });
+  });
+
+  it('hides Save when a playlist is loaded', () => {
+    seedPlaylist();
+    renderHarness('/?playlist=p1');
+    expect(screen.queryByRole('button', { name: 'Save current tempo as track' })).not.toBeInTheDocument();
   });
 });

@@ -48,7 +48,7 @@ export function SaveTrackModal({
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-[var(--surface)] rounded-xl p-6 w-full max-w-md border border-[var(--line)]">
+      <div role="dialog" aria-modal="true" className="bg-[var(--surface)] rounded-xl p-6 w-full max-w-md border border-[var(--line)]">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-[var(--accent)]">Save Track</h2>
           <button onClick={onClose} className="text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors" aria-label="Close">✕</button>
