@@ -157,12 +157,14 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
     }
   }, [playWoodblock, playBeep, playClickSound]);
 
-  const previewSound = useCallback((level: number, volume: number) => {
-    if (!audioCtxRef.current) {
+  const previewSound = useCallback(async (level: number, volume: number) => {
+    if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
       audioCtxRef.current = new AudioContext();
     }
     const ctx = audioCtxRef.current;
-    if (ctx.state === 'suspended') ctx.resume();
+    if (ctx.state !== 'running') {
+      try { await ctx.resume(); } catch { /* ignore */ }
+    }
     const soundType = optionsRef.current.soundType || 'woodblock';
     const volumes = optionsRef.current.accentVolumes || { low: 0.3, mid: 0.6, high: 1.0 };
     // Use the provided volume or the level's default
@@ -211,13 +213,15 @@ export function useMetronome(initialBpm = 100, options?: UseMetronomeOptions): M
 
   useEffect(() => { schedulerRef.current = scheduler; }, [scheduler]);
 
-  const start = useCallback(() => {
+  const start = useCallback(async () => {
     if (isPlaying) return;
-    if (!audioCtxRef.current) {
+    if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
       audioCtxRef.current = new AudioContext();
     }
     const ctx = audioCtxRef.current;
-    if (ctx.state === 'suspended') ctx.resume();
+    if (ctx.state !== 'running') {
+      try { await ctx.resume(); } catch { /* ignore */ }
+    }
     beatCountRef.current = 0;
     nextBeatTimeRef.current = ctx.currentTime + 0.05;
     isPlayingRef.current = true;
