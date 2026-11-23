@@ -47,7 +47,11 @@ export function useTracks() {
     return track;
   }, []);
 
-  const addManualTrack = useCallback(async (title: string, bpm: number) => {
+  const addManualTrack = useCallback(async (
+    title: string,
+    bpm: number,
+    settings?: Pick<Track, 'timeSignature' | 'subdivision' | 'accentPattern'>
+  ) => {
     const track: Track = {
       id: crypto.randomUUID(),
       user_id: 'local',
@@ -60,6 +64,7 @@ export function useTracks() {
       source: 'manual',
       created_at: new Date().toISOString(),
       status: 'ready',
+      ...(settings ?? {}),
     };
     setTracks((prev) => [track, ...prev]);
     return track;
