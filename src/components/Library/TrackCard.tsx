@@ -7,7 +7,7 @@ interface TrackCardProps {
   onDelete?: () => void;
   onEdit?: () => void;
   onPlay?: () => void;
-  onSelectTrack?: (bpm: number, timeSignature: string) => void;
+  onSelectTrack?: (track: Track) => void;
 }
 
 const STATUS_META: Record<
@@ -73,7 +73,7 @@ export function TrackCard({ track, onClick, onDelete, onEdit, onPlay, onSelectTr
         )}
         {onSelectTrack && (
           <button
-            onClick={(e) => { e.stopPropagation(); onSelectTrack(track.bpm ?? 100, '4/4'); }}
+            onClick={(e) => { e.stopPropagation(); onSelectTrack(track); }}
             disabled={!hasBpm}
             className="text-xs text-[var(--accent)] hover:text-[var(--accent)] disabled:text-[var(--ink-3)] disabled:cursor-not-allowed transition-colors"
             title={hasBpm ? 'Set metronome tempo' : 'BPM not available yet'}

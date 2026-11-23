@@ -28,6 +28,7 @@ export function AppShell({ children }: AppShellProps) {
             { path: '/', label: 'Metronome', icon: '♪' },
             { path: '/library', label: 'Library', icon: '☰' },
             { path: '/playlists', label: 'Playlists', icon: '♫' },
+            { path: '/?settings=1', label: 'Settings', icon: '⚙' },
           ].map((item) => (
             <Link
               key={item.path}
@@ -42,7 +43,7 @@ export function AppShell({ children }: AppShellProps) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto pb-16 md:pb-0 pt-14 md:pt-0">
+      <main className="flex-1 overflow-auto pb-16 md:pb-0">
         {children}
       </main>
 

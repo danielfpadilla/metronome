@@ -3,29 +3,57 @@ import { usePlaylists } from '@/hooks/usePlaylists';
 import { useTracks } from '@/hooks/useTracks';
 import type { Track } from '@/types';
 
+const LAST_PLAYLIST_KEY = 'metronome-last-playlist';
+
 interface PlaylistPlayerProps {
   initialPlaylistId?: string | null;
   onBpmChange: (bpm: number) => void;
+  onSettingsChange?: (track: Track) => void;
   isPlaying: boolean;
   onTogglePlay: () => void;
+  onClearPlaylist?: () => void;
+  onLoadedChange?: (loaded: boolean) => void;
 }
 
-export function PlaylistPlayer({ initialPlaylistId, onBpmChange, isPlaying, onTogglePlay }: PlaylistPlayerProps) {
+export function PlaylistPlayer({ initialPlaylistId, onBpmChange, onSettingsChange, isPlaying, onTogglePlay, onClearPlaylist, onLoadedChange }: PlaylistPlayerProps) {
   const { playlists } = usePlaylists();
   const { tracks } = useTracks();
-  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(initialPlaylistId || null);
-
-  // Sync with initialPlaylistId prop
-  useEffect(() => {
-    if (initialPlaylistId) {
-      setSelectedPlaylistId(initialPlaylistId);
-      setCurrentIndex(0);
-    }
-  }, [initialPlaylistId]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showTrackList, setShowTrackList] = useState(false);
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(
+    () => initialPlaylistId || localStorage.getItem(LAST_PLAYLIST_KEY)
+  );
+  const [lastAppliedPlaylistId, setLastAppliedPlaylistId] = useState<string | null>(initialPlaylistId ?? null);
+  const [clearedPlaylistId, setClearedPlaylistId] = useState<string | null>(null);
+
+  // Apply a newly requested playlist; null means navigation without an explicit close.
+  if (
+    initialPlaylistId &&
+    initialPlaylistId !== lastAppliedPlaylistId &&
+    initialPlaylistId !== clearedPlaylistId &&
+    playlists.some((p) => p.id === initialPlaylistId)
+  ) {
+    setLastAppliedPlaylistId(initialPlaylistId);
+    setSelectedPlaylistId(initialPlaylistId);
+    setCurrentIndex(0);
+  }
+  if (!initialPlaylistId && clearedPlaylistId) {
+    setClearedPlaylistId(null);
+  }
+
+  // Remember last loaded playlist across reloads
+  useEffect(() => {
+    if (selectedPlaylistId) {
+      try { localStorage.setItem(LAST_PLAYLIST_KEY, selectedPlaylistId); } catch { /* ignore */ }
+    }
+  }, [selectedPlaylistId]);
 
   const selectedPlaylist = playlists.find((p) => p.id === selectedPlaylistId) || null;
+
+  useEffect(() => {
+    onLoadedChange?.(!!selectedPlaylist);
+  }, [selectedPlaylist, onLoadedChange]);
+
   const playlistTracks = selectedPlaylist?.tracks || [];
 
   const getTrack = useCallback((trackId: string): Track | undefined => {
@@ -34,35 +62,39 @@ export function PlaylistPlayer({ initialPlaylistId, onBpmChange, isPlaying, onTo
 
   const currentTrack = getTrack(playlistTracks[currentIndex]?.track_id ?? '');
 
-  // Sync BPM when track changes
+  // Sync BPM and per-track settings when track changes
   useEffect(() => {
-    if (currentTrack?.bpm) {
-      onBpmChange(currentTrack.bpm);
-    }
-  }, [currentIndex, currentTrack, onBpmChange]);
+    if (!currentTrack) return;
+    if (currentTrack.bpm) onBpmChange(currentTrack.bpm);
+    onSettingsChange?.(currentTrack);
+  }, [currentIndex, currentTrack, onBpmChange, onSettingsChange]);
 
-  const goToTrack = useCallback((index: number) => {
+  const goToTrack = (index: number) => {
     if (index < 0 || index >= playlistTracks.length) return;
     setCurrentIndex(index);
-  }, [playlistTracks.length]);
+  };
 
-  const nextTrack = useCallback(() => {
+  const nextTrack = () => {
     if (currentIndex < playlistTracks.length - 1) {
       setCurrentIndex((i) => i + 1);
     }
-  }, [currentIndex, playlistTracks.length]);
+  };
 
-  const prevTrack = useCallback(() => {
+  const prevTrack = () => {
     if (currentIndex > 0) {
       setCurrentIndex((i) => i - 1);
     }
-  }, [currentIndex]);
+  };
 
-  const clearPlaylist = useCallback(() => {
+  const clearPlaylist = () => {
     setSelectedPlaylistId(null);
+    try { localStorage.removeItem(LAST_PLAYLIST_KEY); } catch { /* ignore */ }
     setCurrentIndex(0);
     setShowTrackList(false);
-  }, []);
+    setLastAppliedPlaylistId(null);
+    setClearedPlaylistId(initialPlaylistId ?? null);
+    onClearPlaylist?.();
+  };
 
   if (!selectedPlaylist) {
     // Show selector when no playlist is loaded

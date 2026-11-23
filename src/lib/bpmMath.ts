@@ -26,6 +26,10 @@ export function tapTempoToBpm(tapTimes: number[]): number | null {
   return clampBpm(60000 / avg);
 }
 
+export function appendTapHistory(history: number[], bpm: number, limit = 20): number[] {
+  return [...history, bpm].slice(-limit);
+}
+
 export function getBeatAccent(beat: number, timeSignature: string): 'accent' | 'normal' {
   if (beat === 0) return 'accent';
   if (timeSignature === '6/8' && beat === 3) return 'accent';

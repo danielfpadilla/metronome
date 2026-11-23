@@ -1,5 +1,9 @@
 # Metronome App — Design Spec
 
+> **Superseded.** This document describes the abandoned Supabase/Auth design.
+> The shipped app is pure frontend with localStorage. See
+> `docs/specs/2026-11-21-metronome-improvement-design.md` for current work.
+
 ## 1. Architecture Overview
 
 ```

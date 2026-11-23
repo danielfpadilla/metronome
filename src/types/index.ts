@@ -10,6 +10,9 @@ export interface Track {
   source: 'youtube' | 'manual';
   created_at: string;
   status?: 'processing' | 'ready' | 'failed' | 'manual_bpm_pending';
+  timeSignature?: TimeSignature;
+  accentPattern?: number[];
+  subdivision?: Subdivision;
 }
 
 export interface Playlist {

@@ -12,6 +12,7 @@ export interface MetronomeSettings {
   accentHigh: number;
   soundType: 'woodblock' | 'beep' | 'click';
   accentPattern: number[]; // 0=off, 1=low, 2=mid, 3=high per beat
+  tapHistory: number[]; // recent tap-tempo BPM estimates, newest last
 }
 
 interface SettingsPanelProps {
@@ -110,6 +111,29 @@ export function SettingsPanel({ isOpen, onClose, settings, onChange, previewSoun
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Tap history */}
+          <div className="pt-2 border-t border-[#333]">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-white">Tap History</h3>
+              <button
+                onClick={() => onChange({ tapHistory: [] })}
+                disabled={settings.tapHistory.length === 0}
+                className="text-xs text-[var(--ink-3)] hover:text-[var(--danger)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:text-[var(--ink-3)]"
+              >
+                Clear
+              </button>
+            </div>
+            {settings.tapHistory.length === 0 ? (
+              <p className="text-xs text-[var(--ink-3)]">No taps recorded</p>
+            ) : (
+              <div className="flex flex-wrap gap-1">
+                {settings.tapHistory.map((bpm, i) => (
+                  <span key={i} className="px-2 py-0.5 rounded bg-[var(--surface-2)] text-xs text-[var(--ink-2)] font-mono">{bpm}</span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Accent volume levels */}

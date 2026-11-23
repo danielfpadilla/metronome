@@ -147,6 +147,12 @@ button, a, [role="button"] {
   min-width: 44px;
 }
 
+/* Compact switches opt out of the minimum touch-target size */
+button[role="switch"] {
+  min-width: 40px;
+  min-height: 20px;
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

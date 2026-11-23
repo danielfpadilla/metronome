@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useMetronome } from '@/hooks/useMetronome';
 import { TapWheel } from './TapWheel';
 import { BpmDisplay } from './BpmDisplay';
@@ -7,18 +7,29 @@ import { SubdivisionButtons } from './SubdivisionButtons';
 import { PlayBar } from './PlayBar';
 import { BeatAccentBar } from './BeatAccentBar';
 import { SettingsPanel } from './SettingsPanel';
+import { SaveTrackModal, type TrackSettings } from './SaveTrackModal';
 import { PlaylistPlayer } from './PlaylistPlayer';
 import { useSettings } from '@/hooks/useSettings';
-import { tapTempoToBpm } from '@/lib/bpmMath';
-import type { TimeSignature } from '@/types';
+import { useTracks } from '@/hooks/useTracks';
+import { tapTempoToBpm, appendTapHistory } from '@/lib/bpmMath';
+import type { TimeSignature, Subdivision, Track } from '@/types';
 
 const TIME_SIGNATURES: TimeSignature[] = ['2/4', '3/4', '4/4', '6/8'];
 
 export function Metronome() {
   const { settings, updateSettings } = useSettings();
   const tapTimesRef = useRef<number[]>([]);
-  const [showSettings, setShowSettings] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const urlParams = new URLSearchParams(location.search);
+  const showSettings = urlParams.get('settings') === '1';
+  const initialPlaylistId = urlParams.get('playlist');
+  const { addManualTrack } = useTracks();
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [savedMessage, setSavedMessage] = useState(false);
+  const [playlistLoaded, setPlaylistLoaded] = useState(
+    () => !!(initialPlaylistId || localStorage.getItem('metronome-last-playlist'))
+  );
 
   // Apply theme
   useEffect(() => {
@@ -60,34 +71,85 @@ export function Metronome() {
     const now = Date.now();
     tapTimesRef.current = [...tapTimesRef.current, now].slice(-6);
     const newBpm = tapTempoToBpm(tapTimesRef.current);
-    if (newBpm !== null) metro.setBpm(newBpm);
-  }, [metro]);
+    if (newBpm !== null) {
+      metro.setBpm(newBpm);
+      updateSettings((prev) => ({ tapHistory: appendTapHistory(prev.tapHistory, newBpm) }));
+    }
+  }, [metro, updateSettings]);
 
-  const [initialPlaylistId, setInitialPlaylistId] = useState<string | null>(null);
+  const { setTimeSignature, setSubdivision } = metro;
+  const currentTs = metro.timeSignature;
 
-  // Apply BPM and playlist from URL params
+  const applyTrackSettings = useCallback((track: Track) => {
+    if (track.timeSignature && TIME_SIGNATURES.includes(track.timeSignature)) {
+      setTimeSignature(track.timeSignature);
+    }
+    if (track.subdivision && [1, 2, 3, 4].includes(track.subdivision)) {
+      setSubdivision(track.subdivision as Subdivision);
+    }
+    if (track.accentPattern?.length) {
+      const beats = parseInt((track.timeSignature ?? currentTs).split('/')[0], 10);
+      if (track.accentPattern.length === beats && track.accentPattern.every((v) => Number.isInteger(v) && v >= 0 && v <= 3)) {
+        updateSettings({ accentPattern: [...track.accentPattern] });
+      }
+    }
+  }, [setTimeSignature, setSubdivision, currentTs, updateSettings]);
+
+  const removeParam = (key: string) => {
+    const next = new URLSearchParams(location.search);
+    next.delete(key);
+    const query = next.toString();
+    navigate(query ? `${location.pathname}?${query}` : location.pathname, { replace: true });
+  };
+
+  // Apply BPM and per-track settings from URL params
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const bpmParam = params.get('bpm');
+    const tsParam = params.get('ts');
+    const subParam = params.get('sub');
+    const accentsParam = params.get('accents');
     if (bpmParam) {
       const bpm = Number(bpmParam);
-      if (!Number.isNaN(bpm)) {
-        metro.setBpm(bpm);
+      if (!Number.isNaN(bpm)) metro.setBpm(bpm);
+    }
+    if (tsParam && TIME_SIGNATURES.includes(tsParam as TimeSignature)) {
+      metro.setTimeSignature(tsParam as TimeSignature);
+    }
+    if (subParam && [1, 2, 3, 4].includes(Number(subParam))) {
+      metro.setSubdivision(Number(subParam) as 1 | 2 | 3 | 4);
+    }
+    if (accentsParam) {
+      const pattern = accentsParam.split(',').map(Number);
+      const beats = tsParam && TIME_SIGNATURES.includes(tsParam as TimeSignature)
+        ? parseInt(tsParam.split('/')[0], 10)
+        : parseInt(metro.timeSignature.split('/')[0], 10);
+      if (pattern.length === beats && pattern.every((v) => Number.isInteger(v) && v >= 0 && v <= 3)) {
+        updateSettings({ accentPattern: pattern });
       }
     }
-    const playlistParam = params.get('playlist');
-    if (playlistParam) {
-      setInitialPlaylistId(playlistParam);
+    if (bpmParam || tsParam || subParam || accentsParam) {
+      params.delete('bpm');
+      params.delete('ts');
+      params.delete('sub');
+      params.delete('accents');
+      const query = params.toString();
+      navigate(query ? `${location.pathname}?${query}` : location.pathname, { replace: true });
     }
-    if (bpmParam || playlistParam) {
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-  }, [location.search, metro]);
+  }, [location.search, location.pathname, metro, updateSettings, navigate]);
 
   // Elapsed time display (kept for future use)
 
   const flashScreenActive = settings.flashScreen && metro.isPlaying && metro.currentBeat === 0;
   const flashNumbers = settings.flashNumbers && metro.isPlaying && metro.currentBeat === 0;
+
+  const handleSaveTrack = useCallback((title: string, trackSettings: TrackSettings) => {
+    return addManualTrack(title, metro.bpm, trackSettings).then(() => {
+      setShowSaveModal(false);
+      setSavedMessage(true);
+      window.setTimeout(() => setSavedMessage(false), 2000);
+    });
+  }, [addManualTrack, metro.bpm]);
 
   return (
     <div className="relative flex flex-col h-full bg-[var(--base)]">
@@ -96,24 +158,15 @@ export function Metronome() {
 
       {/* Top controls */}
       <div className="px-4 py-3 border-b border-[var(--line)]">
-        <div className="flex items-center justify-between mb-3">
-          <div className="w-9 h-9 flex items-center justify-center text-[var(--ink-3)]">♪</div>
+        <div className="flex flex-col items-center mb-3">
+          <div className="h-9 flex items-center justify-center text-[var(--ink)] font-bold text-xs">Metronome</div>
           <BpmDisplay
             bpm={metro.bpm}
             flash={flashNumbers}
+            lastTap={settings.tapHistory[settings.tapHistory.length - 1]}
             onIncrement={() => metro.setBpm(metro.bpm + 1)}
             onDecrement={() => metro.setBpm(metro.bpm - 1)}
           />
-          <div className="flex gap-1">
-            <div className="w-9 h-9 flex items-center justify-center text-[var(--ink-3)]">♪</div>
-            <button
-              onClick={() => setShowSettings(true)}
-              className="w-9 h-9 flex items-center justify-center text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors"
-              aria-label="Settings"
-            >
-              ⚙
-            </button>
-          </div>
         </div>
 
         {/* Time signature selector */}
@@ -131,15 +184,33 @@ export function Metronome() {
         </div>
 
         <div className="flex items-center justify-center gap-2">
-          <PlayBar isPlaying={metro.isPlaying} onToggle={metro.toggle} />
+          <div className="w-full max-w-xs">
+            <PlayBar isPlaying={metro.isPlaying} onToggle={metro.toggle} />
+          </div>
+          {!playlistLoaded && (
+            <button
+              onClick={() => setShowSaveModal(true)}
+              disabled={showSaveModal}
+              className="h-10 px-3 rounded-lg border border-[var(--line)] bg-[var(--surface)] text-[var(--ink)] text-sm hover:border-[var(--accent)] disabled:opacity-50 transition-colors"
+              aria-label="Save current tempo as track"
+            >
+              Save
+            </button>
+          )}
         </div>
+        {savedMessage && (
+          <p role="status" className="text-center text-xs text-[var(--accent)] mt-2">Saved to Library</p>
+        )}
 
         {/* Playlist selector - below play button */}
         <PlaylistPlayer
           initialPlaylistId={initialPlaylistId}
           onBpmChange={metro.setBpm}
+          onSettingsChange={applyTrackSettings}
           isPlaying={metro.isPlaying}
           onTogglePlay={metro.toggle}
+          onClearPlaylist={() => removeParam('playlist')}
+          onLoadedChange={setPlaylistLoaded}
         />
       </div>
 
@@ -196,11 +267,22 @@ export function Metronome() {
 
       <SettingsPanel
         isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
+        onClose={() => removeParam('settings')}
         settings={settings}
         onChange={(patch) => updateSettings(patch)}
         previewSound={metro.previewSound}
       />
+
+      {showSaveModal && (
+        <SaveTrackModal
+          bpm={metro.bpm}
+          timeSignature={metro.timeSignature}
+          subdivision={metro.subdivision}
+          accentPattern={settings.accentPattern}
+          onClose={() => setShowSaveModal(false)}
+          onSave={handleSaveTrack}
+        />
+      )}
     </div>
   );
 }
